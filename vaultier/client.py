@@ -12,15 +12,18 @@ from vaultier.vault import Vault
 from vaultier.card import Card
 from vaultier.secret import Secret
 from vaultier.cypher import Cypher
+from vaultier.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 import json
 import requests
 
 class Client(object):
     """Base class for Vaultier API access"""
-    def __init__(self, server, token):
+    def __init__(self, server, token, priv_key=None, pub_key=None):
         self.server = server
         self.token = token
+        self.priv_key = priv_key
+        self.pub_key = pub_key
 
     def list_workspaces(self):
         """
@@ -95,7 +98,7 @@ class Client(object):
         json_obj = self.fetch_json('/api/secrets/?card={}'.format(card_id))
         return [Secret.from_json(obj) for obj in json_obj]
 
-    def get_secret(self, secret_id, priv_key=None, pub_key=None):
+    def get_secret(self, secret_id):
         """
         Returns a Secret desencrypted from an secret ID
 
@@ -110,32 +113,15 @@ class Client(object):
 
         # If has data decrypt it with workspace_key
         if secret.data:
-            secret.data = json.loads(Cypher(priv_key, pub_key).decrypt(workspace_key, secret.data))
+            secret.data = json.loads(Cypher(self.priv_key, self.pub_key).decrypt(workspace_key, secret.data))
         # If has meta decrypt it with workspace_key
         if secret.blobMeta:
-            secret.blobMeta = json.loads(Cypher(priv_key, pub_key).decrypt(workspace_key, secret.blobMeta))
+            secret.blobMeta = json.loads(Cypher(self.priv_key, self.pub_key).decrypt(workspace_key, secret.blobMeta))
 
         return secret
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
-        #if headers is None:
-        #    headers = {}
-        #if query_params is None:
-        #    query_params = {}
-        #if post_args is None:
-        #    post_args = {}
-
-        """If files no data"""
-        #data = None
-        #if files is None and post_args:
-        #    data = json.dumps(post_args)
-
-        """Set some default headers"""
-        #if http_method in ("POST", "PUT", "DELETE") and not files:
-        #    headers['Content-Type'] = 'application/json; charset=utf-8'
-
-        #headers['Accept'] = 'application/json'
         headers['X-Vaultier-Token'] = self.token
 
         """Construct the full URL"""

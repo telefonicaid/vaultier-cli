@@ -53,6 +53,11 @@ def print_secrets(secrets):
     print (tabulate(s_table, headers=['ID', 'Name', 'Secret type'], tablefmt="rst"))
 
 def print_secret(secret):
+    types = {
+            100: 'Secret note',
+            200: 'Secret password',
+            300: 'Secret file'
+            }
     s_table =[['Name', secret.name]]
     if secret.data:
         if 'url' in secret.data: s_table.append(['URL', secret.data['url']])
@@ -61,5 +66,8 @@ def print_secret(secret):
     if secret.blobMeta:
         s_table.append(['File Name', secret.blobMeta['filename']])
         s_table.append(['File Size', '{} B'.format(secret.blobMeta['filesize'])])
-    if secret.data and 'note' in secret.data: s_table.append(['Note', secret.data['note']])
-    print (tabulate(s_table, headers="firstrow", tablefmt="rst"))
+    s_table.append(['Type', types[secret.type]])
+    print (tabulate(s_table, tablefmt="simple"))
+    if secret.data and 'note' in secret.data:
+        print ('Note:')
+        print (secret.data['note'])

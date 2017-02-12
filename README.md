@@ -7,11 +7,10 @@ virtualenv3 vaultier_cli
 pip install -r requirements.txt
 ```
 
-For now edit `vaultier/vaultier.py` to add your credentials and call
-functions.
+Edit vaultier.conf to set your credentials.
 
 Run.
 
 ```bash
-./vaultier-cli.py
+./vaultier-cli.py -h # Show help
 ```
