@@ -4,13 +4,13 @@ CLI client for Vaultier
 ```bash
 virtualenv3 vaultier_cli
 . vaultier_cli/bin/activate
-pip install -r requirements.txt
+python setup.py install
 ```
 
-Edit vaultier.conf to set your credentials.
+Edit vaultcli.conf to set your credentials.
 
 Run.
 
 ```bash
-./vaultier-cli.py -h # Show help
+vaultcli -h # Show help
 ```
