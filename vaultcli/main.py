@@ -46,7 +46,7 @@ def configure_client():
     priv_key = config.get_default('priv_key')
     pub_key = config.get_default('pub_key') # TODO: Gen pub key from private key
 
-    token = Auth(server, email, priv_key, pub_key).get_token()
+    token = Auth(server, email, priv_key).get_token()
     return Client(server, token, priv_key, pub_key)
 
 def list_workspaces(args):
