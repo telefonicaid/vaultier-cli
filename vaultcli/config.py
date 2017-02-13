@@ -19,7 +19,7 @@ class Config(object):
         try:
             self.config.read(self.config_file)
         except Exception as e:
-            err = 'vaultier-cli config file is corrupted.\n{0}'.format(e)
+            err = 'vaultcli config file is corrupted.\n{0}'.format(e)
             raise SystemExit(err)
 
     def get(self, section, option):
@@ -48,7 +48,7 @@ class Config(object):
             with open(self.config_file, 'w') as configfile:
                 self.config.write(configfile)
         except Exception as e:
-            err = 'vaultier-cli cannot write in config file.\n{0}'.format(e)
+            err = 'vaultcli cannot write in config file.\n{0}'.format(e)
             raise SystemExit(err)
 
     def get_default(self, option):
