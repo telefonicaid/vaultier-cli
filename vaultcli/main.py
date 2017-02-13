@@ -43,11 +43,10 @@ def configure_client():
     # Get config vaules from config file
     email = config.get_default('email')
     server = config.get_default('server')
-    priv_key = config.get_default('priv_key')
-    pub_key = config.get_default('pub_key') # TODO: Gen pub key from private key
+    key = open(config.get_default('priv_key'), "r").read()
 
-    token = Auth(server, email, priv_key).get_token()
-    return Client(server, token, priv_key, pub_key)
+    token = Auth(server, email, key).get_token()
+    return Client(server, token, key)
 
 def list_workspaces(args):
     client = configure_client()

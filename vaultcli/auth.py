@@ -18,10 +18,10 @@ import requests
 
 class Auth(object):
     """Base class for get Vaultier auth token"""
-    def __init__(self, server, email, priv_key):
+    def __init__(self, server, email, key):
         self.server = server
         self.email = email
-        self.priv_key = open(priv_key, "r").read()
+        self.key = key
 
     def get_token(self):
         """
@@ -30,7 +30,7 @@ class Auth(object):
         :return: user token string
         :rtype: string
         """
-        work_space_cypher = WorkspaceCypher(self.priv_key)
+        work_space_cypher = WorkspaceCypher(self.key)
         server_time = self.fetch_json('/api/server-time').get('datetime')
         sha = SHA.new('{}{}'.format(self.email, server_time).encode('utf-8'))
         signature = binascii.b2a_base64(work_space_cypher.sign(sha))

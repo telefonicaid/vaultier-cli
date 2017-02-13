@@ -19,11 +19,10 @@ import requests
 
 class Client(object):
     """Base class for Vaultier API access"""
-    def __init__(self, server, token, priv_key=None, pub_key=None):
+    def __init__(self, server, token, key=None):
         self.server = server
         self.token = token
-        self.priv_key = priv_key
-        self.pub_key = pub_key
+        self.key = key
 
     def list_workspaces(self):
         """
@@ -113,10 +112,10 @@ class Client(object):
 
         # If has data decrypt it with workspace_key
         if secret.data:
-            secret.data = json.loads(Cypher(self.priv_key, self.pub_key).decrypt(workspace_key, secret.data))
+            secret.data = json.loads(Cypher(self.key).decrypt(workspace_key, secret.data))
         # If has meta decrypt it with workspace_key
         if secret.blobMeta:
-            secret.blobMeta = json.loads(Cypher(self.priv_key, self.pub_key).decrypt(workspace_key, secret.blobMeta))
+            secret.blobMeta = json.loads(Cypher(self.key).decrypt(workspace_key, secret.blobMeta))
 
         return secret
 
