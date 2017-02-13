@@ -7,8 +7,8 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
-from vaultier.workspacecypher import WorkspaceCypher
-from vaultier.datacypher import DataCypher
+from vaultcli.workspacecypher import WorkspaceCypher
+from vaultcli.datacypher import DataCypher
 
 class Cypher(object):
     def __init__(self, priv_key, pub_key):

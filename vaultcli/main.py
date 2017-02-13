@@ -7,14 +7,14 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
-from vaultier.auth import Auth
-from vaultier.client import Client
-from vaultier.config import Config
-from vaultier.views import print_workspaces, print_vaults, print_cards, print_secrets, print_secret
+from vaultcli.auth import Auth
+from vaultcli.client import Client
+from vaultcli.config import Config
+from vaultcli.views import print_workspaces, print_vaults, print_cards, print_secrets, print_secret
 
 import argparse
 
-config_file = 'vaultier.conf' # TODO: Seek for config file in different locations
+config_file = 'vaultcli.conf' # TODO: Seek for config file in different locations
 
 def config(args):
     # Get config in object

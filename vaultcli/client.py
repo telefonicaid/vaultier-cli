@@ -7,12 +7,12 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
-from vaultier.workspace import Workspace
-from vaultier.vault import Vault
-from vaultier.card import Card
-from vaultier.secret import Secret
-from vaultier.cypher import Cypher
-from vaultier.exceptions import ResourceUnavailable, Unauthorized, Forbidden
+from vaultcli.workspace import Workspace
+from vaultcli.vault import Vault
+from vaultcli.card import Card
+from vaultcli.secret import Secret
+from vaultcli.cypher import Cypher
+from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 import json
 import requests

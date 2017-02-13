@@ -7,8 +7,8 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
-from vaultier.workspacecypher import WorkspaceCypher
-from vaultier.exceptions import ResourceUnavailable, Unauthorized, Forbidden
+from vaultcli.workspacecypher import WorkspaceCypher
+from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 from Crypto.Hash import SHA
 

@@ -7,7 +7,7 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
-from vaultier import vaultier
+from vaultcli.main import main
 
 if __name__ == '__main__':
-    vaultier.main()
+    main()
