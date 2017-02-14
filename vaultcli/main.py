@@ -153,11 +153,16 @@ def get_file(args):
         msg = 'No file'
         raise SystemExit(msg)
     else:
-        if query_yes_no('Do you want store \'{}\' in current directory?'.format(file[0])):
-            write_binary_file(file[0], file[1])
+        if args.output:
+            file_name = os.path.abspath(args.output)
+            if os.path.isdir(file_name): file_name = os.path.join(file_name, file[0])
+            write_binary_file(file_name, file[1])
         else:
-            msg = 'Nothing to do'
-            raise SystemExit(msg)
+            if query_yes_no('Do you want store \'{}\' in current directory?'.format(file[0])):
+                write_binary_file(file[0], file[1])
+            else:
+                msg = 'Nothing to do'
+                raise SystemExit(msg)
 
 def main():
     """Create an arparse and subparse to manage commands"""
@@ -207,7 +212,7 @@ def main():
     """Add all options for get file command"""
     parser_get_file = subparsers.add_parser('get-file', help='Get binary file from a secret')
     parser_get_file.add_argument('id', metavar='id', help='secret id')
-    parser_get_file.add_argument('-o', '--output', metavar='file' , help='output file')
+    parser_get_file.add_argument('-o', '--output', metavar='file' , help='output file (path must exists)')
     parser_get_file.set_defaults(func=get_file)
 
     """Parse command arguments"""
