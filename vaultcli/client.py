@@ -119,6 +119,26 @@ class Client(object):
 
         return secret
 
+    def get_file(self, secret_id):
+        """
+        Returns a secret file desencrypted from an secret ID
+
+        :param secret_id: Secret unique ID given by list_secrets
+        :return: data
+        :rtype: binary data
+        """
+        secret = Secret.from_json(self.fetch_json('/api/secrets/{}'.format(secret_id)))
+        if secret.blobMeta:
+            vault_id = self.fetch_json('/api/cards/{}'.format(secret.card))['vault']
+            workspace_id = self.fetch_json('/api/vaults/{}'.format(vault_id))['workspace']
+            workspace_key = self.fetch_json('/api/workspaces/{}'.format(workspace_id))['membership']['workspace_key']
+            data = self.fetch_json('/api/secret_blobs/{}'.format(secret_id))['blob_data']
+            file_name = json.loads(Cypher(self.key).decrypt(workspace_key, secret.blobMeta))['filename']
+            file_data = json.loads(Cypher(self.key).decrypt(workspace_key, data))['filedata']
+            return [file_name, file_data]
+        else:
+            return [None, None]
+
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         headers['X-Vaultier-Token'] = self.token
