@@ -66,6 +66,7 @@ class DataCypher(object):
         encoder = PKCS7Encoder()
         pad_text = encoder.encode(plaintext)
         encrypted_text = aes.encrypt(pad_text)
+        concat = "Salted__"+salt+encrypted_text
 
         return binascii.b2a_base64(concat).rstrip()
 
