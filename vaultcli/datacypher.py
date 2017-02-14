@@ -7,9 +7,10 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
+from vaultcli.pkcs7 import PKCS7Encoder
+
 from Crypto import Random
 from Crypto.Cipher import AES
-from pkcs7 import PKCS7Encoder
 
 import binascii
 import hashlib
@@ -88,6 +89,6 @@ class DataCypher(object):
         aes = AES.new(key, MODE, iv)
         decrypted_text = aes.decrypt(encrypted_text_bytes)
         encoder = PKCS7Encoder()
-        unpad_text = encoder.decode(decrypted_text.decode('utf-8'))
+        unpad_text = encoder.decode(decrypted_text)
 
         return unpad_text

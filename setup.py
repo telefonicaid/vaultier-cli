@@ -35,7 +35,6 @@ setup(
     install_requires = [
         "pycrypto>=2.6.1",
         "requests>=2.13.0",
-        "pkcs7>=0.1.0",
         "colorama>=0.3.7",
         "tabulate>=0.7.7"
     ],
