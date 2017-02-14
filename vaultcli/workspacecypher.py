@@ -14,23 +14,18 @@ from Crypto.Signature import PKCS1_v1_5 as PKCS_sign
 import binascii
 
 class WorkspaceCypher(object):
-    def __init__(self, priv_key=None, pub_key=None):
+    def __init__(self, key=None):
         """
-        priv_key: texto ascii con la clave privada
-        pub_key: texto ascii con la clave publica
+        key: ascii RSA private key
         """
-        if priv_key:
-            self.set_priv_key(priv_key)
-        if pub_key:
-            self.set_pub_key(pub_key)
+        if key:
+            self.set_key(key)
 
-    def set_priv_key(self, priv_key):
-        key = RSA.importKey(priv_key)
+    def set_key(self, key):
+        key = RSA.importKey(key)
         self.priv = PKCS1_v1_5.new(key)
         self.priv_sign = PKCS_sign.new(key)
-
-    def set_pub_key(self, pub_key):
-        key = RSA.importKey(pub_key)
+        key = key.publickey()
         self.pub = PKCS1_v1_5.new(key)
         self.pub_sign = PKCS_sign.new(key)
 

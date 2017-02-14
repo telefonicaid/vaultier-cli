@@ -11,14 +11,43 @@ from vaultcli.auth import Auth
 from vaultcli.client import Client
 from vaultcli.config import Config
 from vaultcli.views import print_workspaces, print_vaults, print_cards, print_secrets, print_secret
+from vaultcli.helpers import query_yes_no
 
 import argparse
+import os
 
-config_file = 'vaultcli.conf' # TODO: Seek for config file in different locations
+def get_config_file(args):
+    if args.config:
+        return args.config
+    else:
+        config_files = [
+                os.path.join(os.path.expanduser('~'), '.config/vaultcli/vaultcli.conf'),
+                os.path.join(os.path.expanduser('~'), '.vaultcli.conf')
+                ]
+        config_file = [file for file in config_files if os.access(file, os.R_OK)]
+        if config_file == []:
+            # No config file found, promt to generate default one
+            if query_yes_no('No config file found. You want create new one?'):
+                try:
+                    os.makedirs(os.path.join(os.path.expanduser('~'), '.config/vaultcli'), exist_ok=True)
+                except Exception as e:
+                    err = 'vaultcli cannot create path to new config file.\n{0}'.format(e)
+                    raise SystemExit(err)
+                config_file = os.path.join(os.path.expanduser('~'), '.config/vaultcli/vaultcli.conf')
+                config = Config(config_file)
+                config.set_default('email', 'user@example.com')
+                config.set_default('server', 'https://example.com')
+                config.set_default('key','vaultier.key')
+                msg = 'New config file created in \'{}\'.\nPlease edit it and set your custom parameters.'.format(config_file)
+                raise SystemExit(msg)
+            else:
+                raise SystemExit()
+        else:
+            return config_file[0]
 
 def config(args):
     # Get config in object
-    config = Config(config_file)
+    config = Config(get_config_file(args))
 
     if '.' in args.option:
         try:
@@ -36,37 +65,48 @@ def config(args):
         err = config.get(section, option) if config.get(section, option) else '{0} is not defined in config'.format(args.option)
         raise SystemExit(err)
 
-def configure_client():
+def configure_client(args):
     # Get config in object
+    config_file = get_config_file(args)
     config = Config(config_file)
 
     # Get config vaules from config file
     email = config.get_default('email')
     server = config.get_default('server')
-    priv_key = config.get_default('priv_key')
-    pub_key = config.get_default('pub_key') # TODO: Gen pub key from private key
+    key = config.get_default('key')
 
-    token = Auth(server, email, priv_key, pub_key).get_token()
-    return Client(server, token, priv_key, pub_key)
+    # Check if main values have data
+    if not email or not server or not key:
+        err = 'Your config file \'{}\' is invalid, please check it.'.format(config_file)
+        raise SystemExit(err)
+
+    try:
+        key = open(key, "r").read()
+    except Exception as e:
+        err = 'vaultcli have a problem reading your keyfile.\n{0}'.format(e)
+        raise SystemExit(err)
+
+    token = Auth(server, email, key).get_token()
+    return Client(server, token, key)
 
 def list_workspaces(args):
-    client = configure_client()
+    client = configure_client(args)
     print_workspaces(client.list_workspaces())
 
 def list_vaults(args):
-    client = configure_client()
+    client = configure_client(args)
     print_vaults(client.list_vaults(args.id))
 
 def list_cards(args):
-    client = configure_client()
+    client = configure_client(args)
     print_cards(client.list_cards(args.id))
 
 def list_secrets(args):
-    client = configure_client()
+    client = configure_client(args)
     print_secrets(client.list_secrets(args.id))
 
 def get_secret(args):
-    client = configure_client()
+    client = configure_client(args)
     try:
         secret = client.get_secret(args.id)
     except Exception as e:
@@ -97,11 +137,12 @@ def get_secret(args):
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
+    parser.add_argument('-c', '--config', metavar='file', help='custom configuration file')
     subparsers = parser.add_subparsers(dest='command')
     subparsers.required = True
 
     """Add all options for config command"""
-    parser_config = subparsers.add_parser('config', help='Configure vaultier-cli')
+    parser_config = subparsers.add_parser('config', help='Configure vaultcli')
     parser_config.add_argument('option', metavar='option', help='option name')
     parser_config.add_argument('value', metavar='value', nargs='?', help='option value')
     parser_config.set_defaults(func=config)
