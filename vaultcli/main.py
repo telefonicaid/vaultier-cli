@@ -67,9 +67,8 @@ def config(args):
 
 def write_binary_file(file_name, file_contents):
     try:
-        file = open(file_name, 'wb')
-        file.write(bytes(file_contents, "iso-8859-1"))
-        file.close()
+        with open(file_name, 'wb') as file:
+            file.write(file_contents)
     except Exception as e:
         err = 'vaultcli cannot write file.\n{0}'.format(e)
         raise SystemExit(err)
