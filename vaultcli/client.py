@@ -16,6 +16,7 @@ from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 import json
 import requests
+from urllib.parse import urljoin
 
 class Client(object):
     """Base class for Vaultier API access"""
@@ -125,9 +126,7 @@ class Client(object):
         headers['X-Vaultier-Token'] = self.token
 
         """Construct the full URL"""
-        if uri_path[0] == '/':
-            uri_path = uri_path[1:]
-            url = '{0}/{1}'.format(self.server, uri_path)
+        url = urljoin(self.server, uri_path)
 
         """Perform the HTTP request"""
         response = requests.request(http_method, url, params=params, headers=headers, data=data, files=files, verify=verify)
