@@ -14,9 +14,10 @@ from vaultcli.secret import Secret
 from vaultcli.cypher import Cypher
 from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
+from urllib.parse import urljoin
+
 import json
 import requests
-from urllib.parse import urljoin
 
 class Client(object):
     """Base class for Vaultier API access"""
