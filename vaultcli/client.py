@@ -160,6 +160,32 @@ class Client(object):
                }
         self.fetch_json('/api/secrets/{}/'.format(secret.id), http_method='PUT', data=json.dumps(data))
 
+    def add_workspace(self, ws_name, ws_description=None):
+        """
+        Create new workspace
+
+        :param ws_name: workspace name
+        :param ws_description: workspace description (optional)
+        """
+        # POST /api/workspaces/
+        # {"name":"Test","description":"test test"}
+        data = { 'name': ws_name }
+        if ws_description: data['description'] = ws_description
+        # Create new workspace
+        json_obj = self.fetch_json('/api/workspaces/', http_method='POST', data=json.dumps(data))
+        workspace_id = json_obj['membership']['id']
+        # Get new workspace key
+        json_obj = self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id))
+        print (json_obj)
+
+    def add_vault(self, ws_id, v_name, v_color=None, v_description=None):
+        """
+        """
+        # 
+        # {"name":"test 3","color":"orange","workspace":23,"description":"test test"}
+        return
+
+
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         headers['X-Vaultier-Token'] = self.token
@@ -176,7 +202,7 @@ class Client(object):
             raise Unauthorized('{0} at {1}'.format(response.text, url), response)
         if response.status_code == 403:
             raise Forbidden('{0} at {1}'.format(response.text, url), response)
-        if response.status_code not in {200, 206}:
+        if response.status_code not in {200, 201, 206}:
             raise ResourceUnavailable('{0} at {1}'.format(response.text, url), response)
 
         return response.json()

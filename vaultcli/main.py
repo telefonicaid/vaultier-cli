@@ -188,6 +188,13 @@ def edit_secret(args):
         except Exception as e:
             raise SystemExit(e)
 
+def add_workspace(args):
+    client = configure_client(args)
+    try:
+        client.add_workspace(args.name, args.description)
+    except Exception as e:
+        raise SystemExit(e)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -248,6 +255,12 @@ def main():
     parser_edit_secret.add_argument('-n', '--note', metavar='note', help='edit note')
     parser_edit_secret.add_argument('--name', metavar='name', help='edit name')
     parser_edit_secret.set_defaults(func=edit_secret)
+
+    """Add all options for add workspace command"""
+    parser_add_workspace = subparsers.add_parser('add-workspace', help='Add new Vaultier workspace')
+    parser_add_workspace.add_argument('name', metavar='name', help='workspace name')
+    parser_add_workspace.add_argument('-d', '--description', metavar='description', help='workspace description')
+    parser_add_workspace.set_defaults(func=add_workspace)
 
     """Parse command arguments"""
     args = parser.parse_args()
