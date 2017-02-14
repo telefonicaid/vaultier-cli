@@ -141,9 +141,30 @@ class Client(object):
         else:
             return [None, None]
 
+    def set_secret(self, secret):
+        """
+        Send secret contents to existing secret ID
+
+        :param secret: secret object that contains the data
+        """
+        vault_id = self.fetch_json('/api/cards/{}'.format(secret.card))['vault']
+        workspace_id = self.fetch_json('/api/vaults/{}'.format(vault_id))['workspace']
+        workspace_key = self.fetch_json('/api/workspaces/{}'.format(workspace_id))['membership']['workspace_key']
+        encrypted_data = Cypher(self.key).encrypt(workspace_key, json.dumps(secret.data))
+        data = {
+                'name': secret.name,
+                'type': secret.type,
+                'card': secret.card,
+                'id': secret.id,
+                'data': encrypted_data
+               }
+        self.fetch_json('/api/secrets/{}/'.format(secret.id), http_method='PUT', data=json.dumps(data))
+
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         headers['X-Vaultier-Token'] = self.token
+        if http_method in ('POST', 'PUT', 'DELETE') and not files:
+            headers['Content-Type'] = 'application/json; charset=utf-8'
 
         """Construct the full URL"""
         url = urljoin(self.server, uri_path)

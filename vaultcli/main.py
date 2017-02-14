@@ -163,6 +163,31 @@ def get_file(args):
                 msg = 'Nothing to do'
                 raise SystemExit(msg)
 
+def edit_secret(args):
+    if not (args.url or args.username or args.password or args.note or args.name):
+        err = 'No action requested'
+        raise SystemExit(err)
+    client = configure_client(args)
+    try:
+        secret = client.get_secret(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+    if (args.url or args.username or args.password) and secret.type == 100:
+        err = 'Sorry, but secret notes cannot handle URLs, usernames or passwords.'
+        raise SystemExit(err)
+    else:
+        if not secret.data:
+            secret.data = {}
+        if args.url: secret.data['url'] = args.url
+        if args.username: secret.data['username'] = args.username
+        if args.password: secret.data['password'] = args.password
+        if args.note: secret.data['note'] = args.note
+        if args.name: secret.name = args.name
+        try:
+            client.set_secret(secret)
+        except Exception as e:
+            raise SystemExit(e)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -213,6 +238,16 @@ def main():
     parser_get_file.add_argument('id', metavar='id', help='secret id')
     parser_get_file.add_argument('-o', '--output', metavar='file' , help='output file (path must exists)')
     parser_get_file.set_defaults(func=get_file)
+
+    """Add all options for edit secret command"""
+    parser_edit_secret = subparsers.add_parser('edit-secret', help='Edit secret contents')
+    parser_edit_secret.add_argument('id', metavar='id', help='secret id')
+    parser_edit_secret.add_argument('-l', '--url', metavar='url', help='edit url')
+    parser_edit_secret.add_argument('-u', '--username', metavar='username', help='edit username')
+    parser_edit_secret.add_argument('-p', '--password', metavar='password', help='edit password')
+    parser_edit_secret.add_argument('-n', '--note', metavar='note', help='edit note')
+    parser_edit_secret.add_argument('--name', metavar='name', help='edit name')
+    parser_edit_secret.set_defaults(func=edit_secret)
 
     """Parse command arguments"""
     args = parser.parse_args()

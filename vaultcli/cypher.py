@@ -14,8 +14,14 @@ class Cypher(object):
     def __init__(self, key):
         self.key = key
 
-    def decrypt (self, workspace_key, data_encrypted):
+    def decrypt(self, workspace_key, data_encrypted):
         work_space_cypher = WorkspaceCypher(self.key)
         decrypted_workspace_key = work_space_cypher.decrypt(workspace_key)
         data_cypher = DataCypher(decrypted_workspace_key)
         return data_cypher.decrypt(data_encrypted)
+
+    def encrypt(self, workspace_key, plain_data):
+        work_space_cypher = WorkspaceCypher(self.key)
+        decrypted_workspace_key = work_space_cypher.decrypt(workspace_key)
+        data_cypher = DataCypher(decrypted_workspace_key)
+        return data_cypher.encrypt(plain_data)

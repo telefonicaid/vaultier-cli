@@ -66,9 +66,9 @@ class DataCypher(object):
         encoder = PKCS7Encoder()
         pad_text = encoder.encode(plaintext)
         encrypted_text = aes.encrypt(pad_text)
-        concat = "Salted__"+salt+encrypted_text
+        concat = b'Salted__' + salt + encrypted_text
 
-        return binascii.b2a_base64(concat).rstrip()
+        return (binascii.b2a_base64(concat).rstrip()).decode('utf-8')
 
     def decrypt(self, encrypted_text):
         encrypted_text_bytes = binascii.a2b_base64(encrypted_text)
