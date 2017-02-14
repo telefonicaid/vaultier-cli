@@ -11,6 +11,7 @@ from vaultcli.workspacecypher import WorkspaceCypher
 from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 from Crypto.Hash import SHA
+from urllib.parse import urljoin
 
 import binascii
 import json
@@ -39,9 +40,7 @@ class Auth(object):
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Construct the full URL"""
-        if uri_path[0] == '/':
-            uri_path = uri_path[1:]
-            url = '{0}/{1}'.format(self.server, uri_path)
+        url = urljoin(self.server, uri_path)
 
         """Perform the HTTP request"""
         response = requests.request(http_method, url, params=params, headers=headers, data=data, files=files, verify=verify)
