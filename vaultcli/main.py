@@ -65,6 +65,14 @@ def config(args):
         err = config.get(section, option) if config.get(section, option) else '{0} is not defined in config'.format(args.option)
         raise SystemExit(err)
 
+def write_binary_file(file_name, file_contents):
+    try:
+        with open(file_name, 'wb') as file:
+            file.write(file_contents)
+    except Exception as e:
+        err = 'vaultcli cannot write file.\n{0}'.format(e)
+        raise SystemExit(err)
+
 def configure_client(args):
     # Get config in object
     config_file = get_config_file(args)
@@ -134,6 +142,27 @@ def get_secret(args):
     else:
         print_secret(secret)
 
+def get_file(args):
+    client = configure_client(args)
+    try:
+        file = client.get_file(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+    if not file:
+        msg = 'No file'
+        raise SystemExit(msg)
+    else:
+        if args.output:
+            file_name = os.path.abspath(args.output)
+            if os.path.isdir(file_name): file_name = os.path.join(file_name, file[0])
+            write_binary_file(file_name, file[1])
+        else:
+            if query_yes_no('Do you want store \'{}\' in current directory?'.format(file[0])):
+                write_binary_file(file[0], file[1])
+            else:
+                msg = 'Nothing to do'
+                raise SystemExit(msg)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -167,7 +196,7 @@ def main():
     parser_list_secrets.set_defaults(func=list_secrets)
 
     """Add all options for get secret command"""
-    parser_get_secret = subparsers.add_parser('get-secret', help='Get secret contents from an ID')
+    parser_get_secret = subparsers.add_parser('get-secret', help='Get secret contents')
     parser_get_secret.add_argument('id', metavar='id', help='secret id')
     parser_get_secret.add_argument('-l', '--url', action='store_true', help='get url')
     parser_get_secret.add_argument('-u', '--username', action='store_true', help='get username')
@@ -178,6 +207,12 @@ def main():
     parser_get_secret.add_argument('--file-size', action='store_true', help='get file size')
     parser_get_secret.add_argument('--type', action='store_true', help='get type (numeric)')
     parser_get_secret.set_defaults(func=get_secret)
+
+    """Add all options for get file command"""
+    parser_get_file = subparsers.add_parser('get-file', help='Get binary file from a secret')
+    parser_get_file.add_argument('id', metavar='id', help='secret id')
+    parser_get_file.add_argument('-o', '--output', metavar='file' , help='output file (path must exists)')
+    parser_get_file.set_defaults(func=get_file)
 
     """Parse command arguments"""
     args = parser.parse_args()
