@@ -195,6 +195,20 @@ def add_workspace(args):
     except Exception as e:
         raise SystemExit(e)
 
+def add_vault(args):
+    client = configure_client(args)
+    try:
+        client.add_vault(args.id, args.name, args.description, args.color)
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_card(args):
+    client = configure_client(args)
+    try:
+        client.add_card(args.id, args.name, args.description)
+    except Exception as e:
+        raise SystemExit(e)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -261,6 +275,21 @@ def main():
     parser_add_workspace.add_argument('name', metavar='name', help='workspace name')
     parser_add_workspace.add_argument('-d', '--description', metavar='description', help='workspace description')
     parser_add_workspace.set_defaults(func=add_workspace)
+
+    """Add all options for add vault command"""
+    parser_add_vault = subparsers.add_parser('add-vault', help='Add new vault to a workspace')
+    parser_add_vault.add_argument('id', metavar='id', help='workspace id')
+    parser_add_vault.add_argument('name', metavar='name', help='vault name')
+    parser_add_vault.add_argument('-d', '--description', metavar='description', help='vault description')
+    parser_add_vault.add_argument('--color', choices=['blue', 'orange', 'purple', 'green', 'red'], help='vault color (default blue)')
+    parser_add_vault.set_defaults(func=add_vault)
+
+    """Add all options for add card command"""
+    parser_add_card = subparsers.add_parser('add-card', help='Add new card to a vault')
+    parser_add_card.add_argument('id', metavar='id', help='vault id')
+    parser_add_card.add_argument('name', metavar='name', help='card name')
+    parser_add_card.add_argument('-d', '--description', metavar='description', help='card description')
+    parser_add_card.set_defaults(func=add_card)
 
     """Parse command arguments"""
     args = parser.parse_args()

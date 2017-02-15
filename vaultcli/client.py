@@ -167,8 +167,6 @@ class Client(object):
         :param ws_name: workspace name
         :param ws_description: workspace description (optional)
         """
-        # POST /api/workspaces/
-        # {"name":"Test","description":"test test"}
         data = { 'name': ws_name }
         if ws_description: data['description'] = ws_description
         # Create new workspace
@@ -181,13 +179,37 @@ class Client(object):
                }
         self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
 
-    def add_vault(self, ws_id, v_name, v_color=None, v_description=None):
+    def add_vault(self, ws_id, v_name, v_description=None, v_color=None):
         """
-        """
-        # 
-        # {"name":"test 3","color":"orange","workspace":23,"description":"test test"}
-        return
+        Create new vault
 
+        :param ws_id: workspace id
+        :param v_name: vault name
+        :param v_description: vault description (optional)
+        :param v_color: vault color (optional)
+        """
+        data = {
+                'workspace': ws_id,
+                'name': v_name
+               }
+        if v_description: data['description'] = v_description
+        if v_color: data['color'] = v_color
+        self.fetch_json('/api/vaults/', http_method='POST', data=json.dumps(data))
+
+    def add_card(self, v_id, c_name, c_description=None):
+        """
+        Create new card
+
+        :param v_id: vault id
+        :param c_name: card name
+        :param c_description: card description (optional)
+        """
+        data = {
+                'vault': v_id,
+                'name': c_name
+               }
+        if c_description: data['description'] = c_description
+        self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
