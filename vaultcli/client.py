@@ -174,9 +174,12 @@ class Client(object):
         # Create new workspace
         json_obj = self.fetch_json('/api/workspaces/', http_method='POST', data=json.dumps(data))
         workspace_id = json_obj['membership']['id']
-        # Get new workspace key
-        json_obj = self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id))
-        print (json_obj)
+        # Set a new key for the new workspace
+        data = {
+                'id': workspace_id,
+                'workspace_key': Cypher(self.key).gen_workspace_key()
+               }
+        self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
 
     def add_vault(self, ws_id, v_name, v_color=None, v_description=None):
         """

@@ -10,6 +10,8 @@
 from vaultcli.workspacecypher import WorkspaceCypher
 from vaultcli.datacypher import DataCypher
 
+import secrets
+
 class Cypher(object):
     def __init__(self, key):
         self.key = key
@@ -25,3 +27,9 @@ class Cypher(object):
         decrypted_workspace_key = work_space_cypher.decrypt(workspace_key)
         data_cypher = DataCypher(decrypted_workspace_key)
         return data_cypher.encrypt(plain_data)
+
+    def gen_workspace_key(self, size=32):
+        random_key = secrets.token_bytes(size)
+        work_space_cypher = WorkspaceCypher(self.key)
+        new_workspace_key = work_space_cypher.encrypt(random_key)
+        return new_workspace_key.decode()
