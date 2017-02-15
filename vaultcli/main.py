@@ -10,7 +10,7 @@
 from vaultcli.auth import Auth
 from vaultcli.client import Client
 from vaultcli.config import Config
-from vaultcli.views import print_workspaces, print_vaults, print_cards, print_secrets, print_secret
+from vaultcli.views import print_tree, print_workspaces, print_vaults, print_cards, print_secrets, print_secret
 from vaultcli.helpers import query_yes_no
 
 import argparse
@@ -96,6 +96,23 @@ def configure_client(args):
 
     token = Auth(server, email, key).get_token()
     return Client(server, token, key)
+
+def tree_workspace(args):
+    client = configure_client(args)
+    vault_list = []
+    workspace_name = client.get_workspace_name(args.id)
+    vaults = client.list_vaults(args.id)
+    for vault in vaults:
+        card_list = []
+        cards = client.list_cards(vault.id)
+        for card in cards:
+            secret_list = []
+            secrets = client.list_secrets(card.id)
+            for secret in secrets:
+                secret_list.append('{}: {}'.format(secret.name, secret.id))
+            card_list.append(['{}: {}'.format(card.name, card.id), secret_list])
+        vault_list.append(['{}: {}'.format(vault.name, vault.id), card_list])
+    print_tree([workspace_name, vault_list])
 
 def list_workspaces(args):
     client = configure_client(args)
@@ -221,6 +238,11 @@ def main():
     parser_config.add_argument('option', metavar='option', help='option name')
     parser_config.add_argument('value', metavar='value', nargs='?', help='option value')
     parser_config.set_defaults(func=config)
+
+    """Add all options for tree command"""
+    parser_tree_workspace = subparsers.add_parser('tree-workspace', help='List workspace as tree')
+    parser_tree_workspace.add_argument('id', metavar='id', help='workspace id')
+    parser_tree_workspace.set_defaults(func=tree_workspace)
 
     """Add all options for list workspaces command"""
     parser_list_workspaces = subparsers.add_parser('list-workspaces', help='List Vaultier workspaces')

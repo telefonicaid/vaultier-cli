@@ -99,6 +99,17 @@ class Client(object):
         json_obj = self.fetch_json('/api/secrets/?card={}'.format(card_id))
         return [Secret.from_json(obj) for obj in json_obj]
 
+    def get_workspace_name(self, workspace_id):
+        """
+        Returns a Workspace name form id
+
+        :param workspace_id: Workspace unique ID given by list_workspaces
+        :return: workspace name
+        :rtype: string
+        """
+        json_obj = self.fetch_json('/api/workspaces/{}/'.format(workspace_id))
+        return json_obj['name']
+
     def get_secret(self, secret_id):
         """
         Returns a Secret desencrypted from an secret ID
