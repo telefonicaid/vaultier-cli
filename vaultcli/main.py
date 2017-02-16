@@ -226,6 +226,13 @@ def add_card(args):
     except Exception as e:
         raise SystemExit(e)
 
+def add_secret_note(args):
+    client = configure_client(args)
+    try:
+        client.add_secret_note(args.id, args.name, args.note)
+    except Exception as e:
+        raise SystemExit(e)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -312,6 +319,37 @@ def main():
     parser_add_card.add_argument('name', metavar='name', help='card name')
     parser_add_card.add_argument('-d', '--description', metavar='description', help='card description')
     parser_add_card.set_defaults(func=add_card)
+
+    """Add all options for add secret command"""
+    parser_add_secret = subparsers.add_parser('add-secret', help='Add new secret to a card')
+    add_secret_subparsers = parser_add_secret.add_subparsers(dest='command')
+    add_secret_subparsers.required = True
+
+    """Add all options for add secret note command"""
+    parser_add_secret_note = add_secret_subparsers.add_parser('note', help='Add new secret note')
+    parser_add_secret_note.add_argument('id', metavar='id', help='card id')
+    parser_add_secret_note.add_argument('name', metavar='name', help='name of secret note')
+    parser_add_secret_note.add_argument('note', metavar='note', help='note contents')
+    parser_add_secret_note.set_defaults(func=add_secret_note)
+
+    """Add all options for add secret password command"""
+    parser_add_secret_password = add_secret_subparsers.add_parser('password', help='Add new secret password')
+    parser_add_secret_password.add_argument('id', metavar='id', help='card id')
+    parser_add_secret_password.add_argument('name', metavar='name', help='name of secret password')
+    parser_add_secret_password.add_argument('password', metavar='password', help='password itself')
+    parser_add_secret_password.add_argument('-l', '--url', metavar='url', help='optional url')
+    parser_add_secret_password.add_argument('-u', '--username', metavar='username', help='optional username')
+    parser_add_secret_password.add_argument('-n', '--note', metavar='note', help='optional note')
+
+    """Add all options for add secret file command"""
+    parser_add_secret_file = add_secret_subparsers.add_parser('file', help='Add new secret file')
+    parser_add_secret_file.add_argument('id', metavar='id', help='card id')
+    parser_add_secret_file.add_argument('name', metavar='name', help='name of secret file')
+    parser_add_secret_file.add_argument('file', metavar='file', type=argparse.FileType('rb'), help='file itself')
+    parser_add_secret_file.add_argument('-l', '--url', metavar='url', help='optional url')
+    parser_add_secret_file.add_argument('-u', '--username', metavar='username', help='optional username')
+    parser_add_secret_file.add_argument('-p', '--password', metavar='password', help='optional password')
+    parser_add_secret_file.add_argument('-n', '--note', metavar='note', help='optional note')
 
     """Parse command arguments"""
     args = parser.parse_args()
