@@ -15,6 +15,8 @@ from vaultcli.cypher import Cypher
 from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 from urllib.parse import urljoin
+from os.path import basename
+from mimetypes import MimeTypes
 
 import json
 import requests
@@ -242,7 +244,16 @@ class Client(object):
                 'name': secret_name,
                 'data': encrypted_data
                }
-        self.fetch_json('/api/secrets/', http_method='POST', data=json.dumps(data))
+        new_secret = self.fetch_json('/api/secrets/', http_method='POST', data=json.dumps(data))
+        if type == 'file' and file:
+            with file as f:
+                filedata = {'filedata': str(f.read(), "iso-8859-1")}
+                filemeta = {'filename': basename(f.name), 'filesize': f.tell()}
+                filemeta['filetype'] = MimeTypes().guess_type(f.name)[0] if MimeTypes().guess_type(f.name)[0] else ''
+            encrypted_filedata = Cypher(self.key).encrypt(workspace_key, json.dumps(filedata))
+            encrypted_filemeta = Cypher(self.key).encrypt(workspace_key, json.dumps(filemeta))
+            files = {'blob_data': ('blob', encrypted_filedata, 'application/octet-stream'), 'blob_meta': (None, encrypted_filemeta)}
+            self.fetch_json('/api/secret_blobs/{}/'.format(new_secret['id']), http_method='PUT', headers={}, files=files)
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""

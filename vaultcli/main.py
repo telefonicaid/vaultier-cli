@@ -242,7 +242,23 @@ def add_secret_password(args):
             'username': args.username,
             'note': args.note
                }
-    client.add_secret(args.id, args.name, json_obj, 'password')
+    try:
+        client.add_secret(args.id, args.name, json_obj, 'password')
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_secret_file(args):
+    client = configure_client(args)
+    json_obj = {
+            'password': args.password,
+            'url': args.url,
+            'username': args.username,
+            'note': args.note
+               }
+    try:
+        client.add_secret(args.id, args.name, json_obj, 'file', args.file)
+    except Exception as e:
+        raise SystemExit(e)
 
 def main():
     """Create an arparse and subparse to manage commands"""
@@ -362,6 +378,7 @@ def main():
     parser_add_secret_file.add_argument('-u', '--username', metavar='username', help='optional username')
     parser_add_secret_file.add_argument('-p', '--password', metavar='password', help='optional password')
     parser_add_secret_file.add_argument('-n', '--note', metavar='note', help='optional note')
+    parser_add_secret_file.set_defaults(func=add_secret_file)
 
     """Parse command arguments"""
     args = parser.parse_args()
