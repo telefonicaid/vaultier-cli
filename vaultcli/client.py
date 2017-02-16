@@ -222,23 +222,24 @@ class Client(object):
         if c_description: data['description'] = c_description
         self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
 
-    def add_secret_note(self, card_id, note_name, note_note):
+    def add_secret(self, card_id, secret_name, json_obj, type='password', file=None):
         """
-        Create new secret note
+        Create new secret
 
         :param card_id: card id
-        :param note_name: note name
-        :param note_note: note contents
+        :param secret_name: secret name
+        :param json_obj: json object with secret contents
+        :param type: type of secret (note, password or file)
         """
-        note = {'note': note_note}
+        types = {'note':100, 'password': 200, 'file': 300}
         vault_id = self.fetch_json('/api/cards/{}'.format(card_id))['vault']
         workspace_id = self.fetch_json('/api/vaults/{}'.format(vault_id))['workspace']
         workspace_key = self.fetch_json('/api/workspaces/{}'.format(workspace_id))['membership']['workspace_key']
-        encrypted_data = Cypher(self.key).encrypt(workspace_key, json.dumps(note))
+        encrypted_data = Cypher(self.key).encrypt(workspace_key, json.dumps(json_obj))
         data = {
                 'card': card_id,
-                'type': 100,
-                'name': note_name,
+                'type': types[type],
+                'name': secret_name,
                 'data': encrypted_data
                }
         self.fetch_json('/api/secrets/', http_method='POST', data=json.dumps(data))

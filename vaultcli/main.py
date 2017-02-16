@@ -181,7 +181,7 @@ def get_file(args):
                 raise SystemExit(msg)
 
 def edit_secret(args):
-    if not (args.url or args.username or args.password or args.note or args.name):
+    if all(arg == None for arg in (args.url, args.username, args.password, args.note, args.name)):
         err = 'No action requested'
         raise SystemExit(err)
     client = configure_client(args)
@@ -189,17 +189,17 @@ def edit_secret(args):
         secret = client.get_secret(args.id)
     except Exception as e:
         raise SystemExit(e)
-    if (args.url or args.username or args.password) and secret.type == 100:
+    if (args.url != None or args.username != None or args.password != None) and secret.type == 100:
         err = 'Sorry, but secret notes cannot handle URLs, usernames or passwords.'
         raise SystemExit(err)
     else:
         if not secret.data:
             secret.data = {}
-        if args.url: secret.data['url'] = args.url
-        if args.username: secret.data['username'] = args.username
-        if args.password: secret.data['password'] = args.password
-        if args.note: secret.data['note'] = args.note
-        if args.name: secret.name = args.name
+        if args.url != None: secret.data['url'] = args.url
+        if args.username != None: secret.data['username'] = args.username
+        if args.password != None: secret.data['password'] = args.password
+        if args.note != None: secret.data['note'] = args.note
+        if args.name != None: secret.name = args.name
         try:
             client.set_secret(secret)
         except Exception as e:
@@ -228,10 +228,21 @@ def add_card(args):
 
 def add_secret_note(args):
     client = configure_client(args)
+    json_obj = {'note': args.note}
     try:
-        client.add_secret_note(args.id, args.name, args.note)
+        client.add_secret(args.id, args.name, json_obj, 'note')
     except Exception as e:
         raise SystemExit(e)
+
+def add_secret_password(args):
+    client = configure_client(args)
+    json_obj = {
+            'password': args.password,
+            'url': args.url,
+            'username': args.username,
+            'note': args.note
+               }
+    client.add_secret(args.id, args.name, json_obj, 'password')
 
 def main():
     """Create an arparse and subparse to manage commands"""
@@ -340,6 +351,7 @@ def main():
     parser_add_secret_password.add_argument('-l', '--url', metavar='url', help='optional url')
     parser_add_secret_password.add_argument('-u', '--username', metavar='username', help='optional username')
     parser_add_secret_password.add_argument('-n', '--note', metavar='note', help='optional note')
+    parser_add_secret_password.set_defaults(func=add_secret_password)
 
     """Add all options for add secret file command"""
     parser_add_secret_file = add_secret_subparsers.add_parser('file', help='Add new secret file')
