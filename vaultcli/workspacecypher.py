@@ -42,7 +42,7 @@ class WorkspaceCypher(object):
         Retorna una string en base64 de los datos codificados
         """
         crypted = self.pub.encrypt(text)
-        crypted_b64 = binascii.b2a_base64(crypted)
+        crypted_b64 = binascii.b2a_base64(crypted, newline=False)
         return crypted_b64
 
     def decrypt(self, base64_text):

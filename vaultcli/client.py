@@ -15,6 +15,8 @@ from vaultcli.cypher import Cypher
 from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
 from urllib.parse import urljoin
+from os.path import basename
+from mimetypes import MimeTypes
 
 import json
 import requests
@@ -99,6 +101,17 @@ class Client(object):
         json_obj = self.fetch_json('/api/secrets/?card={}'.format(card_id))
         return [Secret.from_json(obj) for obj in json_obj]
 
+    def get_workspace_name(self, workspace_id):
+        """
+        Returns a Workspace name form id
+
+        :param workspace_id: Workspace unique ID given by list_workspaces
+        :return: workspace name
+        :rtype: string
+        """
+        json_obj = self.fetch_json('/api/workspaces/{}/'.format(workspace_id))
+        return json_obj['name']
+
     def get_secret(self, secret_id):
         """
         Returns a Secret desencrypted from an secret ID
@@ -160,6 +173,88 @@ class Client(object):
                }
         self.fetch_json('/api/secrets/{}/'.format(secret.id), http_method='PUT', data=json.dumps(data))
 
+    def add_workspace(self, ws_name, ws_description=None):
+        """
+        Create new workspace
+
+        :param ws_name: workspace name
+        :param ws_description: workspace description (optional)
+        """
+        data = { 'name': ws_name }
+        if ws_description: data['description'] = ws_description
+        # Create new workspace
+        json_obj = self.fetch_json('/api/workspaces/', http_method='POST', data=json.dumps(data))
+        workspace_id = json_obj['membership']['id']
+        # Set a new key for the new workspace
+        data = {
+                'id': workspace_id,
+                'workspace_key': Cypher(self.key).gen_workspace_key()
+               }
+        self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
+
+    def add_vault(self, ws_id, v_name, v_description=None, v_color=None):
+        """
+        Create new vault
+
+        :param ws_id: workspace id
+        :param v_name: vault name
+        :param v_description: vault description (optional)
+        :param v_color: vault color (optional)
+        """
+        data = {
+                'workspace': ws_id,
+                'name': v_name
+               }
+        if v_description: data['description'] = v_description
+        if v_color: data['color'] = v_color
+        self.fetch_json('/api/vaults/', http_method='POST', data=json.dumps(data))
+
+    def add_card(self, v_id, c_name, c_description=None):
+        """
+        Create new card
+
+        :param v_id: vault id
+        :param c_name: card name
+        :param c_description: card description (optional)
+        """
+        data = {
+                'vault': v_id,
+                'name': c_name
+               }
+        if c_description: data['description'] = c_description
+        self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
+
+    def add_secret(self, card_id, secret_name, json_obj, type='password', file=None):
+        """
+        Create new secret
+
+        :param card_id: card id
+        :param secret_name: secret name
+        :param json_obj: json object with secret contents
+        :param type: type of secret (note, password or file)
+        """
+        types = {'note':100, 'password': 200, 'file': 300}
+        vault_id = self.fetch_json('/api/cards/{}'.format(card_id))['vault']
+        workspace_id = self.fetch_json('/api/vaults/{}'.format(vault_id))['workspace']
+        workspace_key = self.fetch_json('/api/workspaces/{}'.format(workspace_id))['membership']['workspace_key']
+        encrypted_data = Cypher(self.key).encrypt(workspace_key, json.dumps(json_obj))
+        data = {
+                'card': card_id,
+                'type': types[type],
+                'name': secret_name,
+                'data': encrypted_data
+               }
+        new_secret = self.fetch_json('/api/secrets/', http_method='POST', data=json.dumps(data))
+        if type == 'file' and file:
+            with file as f:
+                filedata = {'filedata': str(f.read(), "iso-8859-1")}
+                filemeta = {'filename': basename(f.name), 'filesize': f.tell()}
+                filemeta['filetype'] = MimeTypes().guess_type(f.name)[0] if MimeTypes().guess_type(f.name)[0] else ''
+            encrypted_filedata = Cypher(self.key).encrypt(workspace_key, json.dumps(filedata))
+            encrypted_filemeta = Cypher(self.key).encrypt(workspace_key, json.dumps(filemeta))
+            files = {'blob_data': ('blob', encrypted_filedata, 'application/octet-stream'), 'blob_meta': (None, encrypted_filemeta)}
+            self.fetch_json('/api/secret_blobs/{}/'.format(new_secret['id']), http_method='PUT', headers={}, files=files)
+
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         headers['X-Vaultier-Token'] = self.token
@@ -176,7 +271,7 @@ class Client(object):
             raise Unauthorized('{0} at {1}'.format(response.text, url), response)
         if response.status_code == 403:
             raise Forbidden('{0} at {1}'.format(response.text, url), response)
-        if response.status_code not in {200, 206}:
+        if response.status_code not in {200, 201, 206}:
             raise ResourceUnavailable('{0} at {1}'.format(response.text, url), response)
 
         return response.json()

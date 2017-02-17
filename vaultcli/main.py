@@ -10,7 +10,7 @@
 from vaultcli.auth import Auth
 from vaultcli.client import Client
 from vaultcli.config import Config
-from vaultcli.views import print_workspaces, print_vaults, print_cards, print_secrets, print_secret
+from vaultcli.views import print_tree, print_workspaces, print_vaults, print_cards, print_secrets, print_secret
 from vaultcli.helpers import query_yes_no
 
 import argparse
@@ -97,6 +97,23 @@ def configure_client(args):
     token = Auth(server, email, key).get_token()
     return Client(server, token, key)
 
+def tree_workspace(args):
+    client = configure_client(args)
+    vault_list = []
+    workspace_name = client.get_workspace_name(args.id)
+    vaults = client.list_vaults(args.id)
+    for vault in vaults:
+        card_list = []
+        cards = client.list_cards(vault.id)
+        for card in cards:
+            secret_list = []
+            secrets = client.list_secrets(card.id)
+            for secret in secrets:
+                secret_list.append('{}: {}'.format(secret.name, secret.id))
+            card_list.append(['{}: {}'.format(card.name, card.id), secret_list])
+        vault_list.append(['{}: {}'.format(vault.name, vault.id), card_list])
+    print_tree([workspace_name, vault_list])
+
 def list_workspaces(args):
     client = configure_client(args)
     print_workspaces(client.list_workspaces())
@@ -164,7 +181,7 @@ def get_file(args):
                 raise SystemExit(msg)
 
 def edit_secret(args):
-    if not (args.url or args.username or args.password or args.note or args.name):
+    if all(arg == None for arg in (args.url, args.username, args.password, args.note, args.name)):
         err = 'No action requested'
         raise SystemExit(err)
     client = configure_client(args)
@@ -172,21 +189,76 @@ def edit_secret(args):
         secret = client.get_secret(args.id)
     except Exception as e:
         raise SystemExit(e)
-    if (args.url or args.username or args.password) and secret.type == 100:
+    if (args.url != None or args.username != None or args.password != None) and secret.type == 100:
         err = 'Sorry, but secret notes cannot handle URLs, usernames or passwords.'
         raise SystemExit(err)
     else:
         if not secret.data:
             secret.data = {}
-        if args.url: secret.data['url'] = args.url
-        if args.username: secret.data['username'] = args.username
-        if args.password: secret.data['password'] = args.password
-        if args.note: secret.data['note'] = args.note
-        if args.name: secret.name = args.name
+        if args.url != None: secret.data['url'] = args.url
+        if args.username != None: secret.data['username'] = args.username
+        if args.password != None: secret.data['password'] = args.password
+        if args.note != None: secret.data['note'] = args.note
+        if args.name != None: secret.name = args.name
         try:
             client.set_secret(secret)
         except Exception as e:
             raise SystemExit(e)
+
+def add_workspace(args):
+    client = configure_client(args)
+    try:
+        client.add_workspace(args.name, args.description)
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_vault(args):
+    client = configure_client(args)
+    try:
+        client.add_vault(args.id, args.name, args.description, args.color)
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_card(args):
+    client = configure_client(args)
+    try:
+        client.add_card(args.id, args.name, args.description)
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_secret_note(args):
+    client = configure_client(args)
+    json_obj = {'note': args.note}
+    try:
+        client.add_secret(args.id, args.name, json_obj, 'note')
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_secret_password(args):
+    client = configure_client(args)
+    json_obj = {
+            'password': args.password,
+            'url': args.url,
+            'username': args.username,
+            'note': args.note
+               }
+    try:
+        client.add_secret(args.id, args.name, json_obj, 'password')
+    except Exception as e:
+        raise SystemExit(e)
+
+def add_secret_file(args):
+    client = configure_client(args)
+    json_obj = {
+            'password': args.password,
+            'url': args.url,
+            'username': args.username,
+            'note': args.note
+               }
+    try:
+        client.add_secret(args.id, args.name, json_obj, 'file', args.file)
+    except Exception as e:
+        raise SystemExit(e)
 
 def main():
     """Create an arparse and subparse to manage commands"""
@@ -200,6 +272,11 @@ def main():
     parser_config.add_argument('option', metavar='option', help='option name')
     parser_config.add_argument('value', metavar='value', nargs='?', help='option value')
     parser_config.set_defaults(func=config)
+
+    """Add all options for tree command"""
+    parser_tree_workspace = subparsers.add_parser('tree-workspace', help='List workspace as tree')
+    parser_tree_workspace.add_argument('id', metavar='id', help='workspace id')
+    parser_tree_workspace.set_defaults(func=tree_workspace)
 
     """Add all options for list workspaces command"""
     parser_list_workspaces = subparsers.add_parser('list-workspaces', help='List Vaultier workspaces')
@@ -248,6 +325,60 @@ def main():
     parser_edit_secret.add_argument('-n', '--note', metavar='note', help='edit note')
     parser_edit_secret.add_argument('--name', metavar='name', help='edit name')
     parser_edit_secret.set_defaults(func=edit_secret)
+
+    """Add all options for add workspace command"""
+    parser_add_workspace = subparsers.add_parser('add-workspace', help='Add new Vaultier workspace')
+    parser_add_workspace.add_argument('name', metavar='name', help='workspace name')
+    parser_add_workspace.add_argument('-d', '--description', metavar='description', help='workspace description')
+    parser_add_workspace.set_defaults(func=add_workspace)
+
+    """Add all options for add vault command"""
+    parser_add_vault = subparsers.add_parser('add-vault', help='Add new vault to a workspace')
+    parser_add_vault.add_argument('id', metavar='id', help='workspace id')
+    parser_add_vault.add_argument('name', metavar='name', help='vault name')
+    parser_add_vault.add_argument('-d', '--description', metavar='description', help='vault description')
+    parser_add_vault.add_argument('--color', choices=['blue', 'orange', 'purple', 'green', 'red'], help='vault color (default blue)')
+    parser_add_vault.set_defaults(func=add_vault)
+
+    """Add all options for add card command"""
+    parser_add_card = subparsers.add_parser('add-card', help='Add new card to a vault')
+    parser_add_card.add_argument('id', metavar='id', help='vault id')
+    parser_add_card.add_argument('name', metavar='name', help='card name')
+    parser_add_card.add_argument('-d', '--description', metavar='description', help='card description')
+    parser_add_card.set_defaults(func=add_card)
+
+    """Add all options for add secret command"""
+    parser_add_secret = subparsers.add_parser('add-secret', help='Add new secret to a card')
+    add_secret_subparsers = parser_add_secret.add_subparsers(dest='command')
+    add_secret_subparsers.required = True
+
+    """Add all options for add secret note command"""
+    parser_add_secret_note = add_secret_subparsers.add_parser('note', help='Add new secret note')
+    parser_add_secret_note.add_argument('id', metavar='id', help='card id')
+    parser_add_secret_note.add_argument('name', metavar='name', help='name of secret note')
+    parser_add_secret_note.add_argument('note', metavar='note', help='note contents')
+    parser_add_secret_note.set_defaults(func=add_secret_note)
+
+    """Add all options for add secret password command"""
+    parser_add_secret_password = add_secret_subparsers.add_parser('password', help='Add new secret password')
+    parser_add_secret_password.add_argument('id', metavar='id', help='card id')
+    parser_add_secret_password.add_argument('name', metavar='name', help='name of secret password')
+    parser_add_secret_password.add_argument('password', metavar='password', help='password itself')
+    parser_add_secret_password.add_argument('-l', '--url', metavar='url', help='optional url')
+    parser_add_secret_password.add_argument('-u', '--username', metavar='username', help='optional username')
+    parser_add_secret_password.add_argument('-n', '--note', metavar='note', help='optional note')
+    parser_add_secret_password.set_defaults(func=add_secret_password)
+
+    """Add all options for add secret file command"""
+    parser_add_secret_file = add_secret_subparsers.add_parser('file', help='Add new secret file')
+    parser_add_secret_file.add_argument('id', metavar='id', help='card id')
+    parser_add_secret_file.add_argument('name', metavar='name', help='name of secret file')
+    parser_add_secret_file.add_argument('file', metavar='file', type=argparse.FileType('rb'), help='file itself')
+    parser_add_secret_file.add_argument('-l', '--url', metavar='url', help='optional url')
+    parser_add_secret_file.add_argument('-u', '--username', metavar='username', help='optional username')
+    parser_add_secret_file.add_argument('-p', '--password', metavar='password', help='optional password')
+    parser_add_secret_file.add_argument('-n', '--note', metavar='note', help='optional note')
+    parser_add_secret_file.set_defaults(func=add_secret_file)
 
     """Parse command arguments"""
     args = parser.parse_args()

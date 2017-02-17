@@ -36,7 +36,8 @@ setup(
         "pycrypto>=2.6.1",
         "requests>=2.13.0",
         "colorama>=0.3.7",
-        "tabulate>=0.7.7"
+        "tabulate>=0.7.7",
+        "treelib>=1.3.5"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

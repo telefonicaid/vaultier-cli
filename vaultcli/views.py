@@ -9,11 +9,33 @@
 
 from colorama import init, Fore
 from tabulate import tabulate
+from treelib import Tree
 
 import sys
 
 # Initialize colorama
 init(strip=not sys.stdout.isatty())
+
+def print_tree(lst):
+    # Add subfunction to use recursion
+    def add_elements(lst, parent='root', lvl=0):
+        if lvl == 0:
+            # root level, create firs element of list
+            tree.create_node(lst[0], parent)
+        else:
+            tree.create_node(lst[0], lst[0], parent=parent)
+            # not at root level change parent
+            parent = lst[0]
+        for element in lst[1]:
+            if type(element) is list:
+                # recursion!!!
+                add_elements(element, parent, lvl + 1)
+            else:
+                tree.create_node(element, element, parent=parent)
+
+    tree = Tree()
+    add_elements(lst)
+    tree.show()
 
 def print_workspaces(workspaces):
     ws_table = []
