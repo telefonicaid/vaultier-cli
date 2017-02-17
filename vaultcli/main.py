@@ -181,7 +181,7 @@ def get_file(args):
                 raise SystemExit(msg)
 
 def edit_secret(args):
-    if all(arg == None for arg in (args.url, args.username, args.password, args.note, args.name)):
+    if all(arg == None for arg in (args.url, args.username, args.password, args.note, args.file, args.name)):
         err = 'No action requested'
         raise SystemExit(err)
     client = configure_client(args)
@@ -189,8 +189,11 @@ def edit_secret(args):
         secret = client.get_secret(args.id)
     except Exception as e:
         raise SystemExit(e)
-    if (args.url != None or args.username != None or args.password != None) and secret.type == 100:
-        err = 'Sorry, but secret notes cannot handle URLs, usernames or passwords.'
+    if (args.url != None or args.username != None or args.password != None or args.file != None) and secret.type == 100:
+        err = 'Sorry, but secret notes cannot handle URLs, usernames, passwords or files.'
+        raise SystemExit(err)
+    if args.file != None and secret.type == 200:
+        err = 'Sorry, but secret passwords cannot handle files.'
         raise SystemExit(err)
     else:
         if not secret.data:
@@ -201,7 +204,7 @@ def edit_secret(args):
         if args.note != None: secret.data['note'] = args.note
         if args.name != None: secret.name = args.name
         try:
-            client.set_secret(secret)
+            client.set_secret(secret, args.file)
         except Exception as e:
             raise SystemExit(e)
 
@@ -323,6 +326,7 @@ def main():
     parser_edit_secret.add_argument('-u', '--username', metavar='username', help='edit username')
     parser_edit_secret.add_argument('-p', '--password', metavar='password', help='edit password')
     parser_edit_secret.add_argument('-n', '--note', metavar='note', help='edit note')
+    parser_edit_secret.add_argument('-f', '--file', metavar='file', type=argparse.FileType('rb'), help='change file')
     parser_edit_secret.add_argument('--name', metavar='name', help='edit name')
     parser_edit_secret.set_defaults(func=edit_secret)
 
