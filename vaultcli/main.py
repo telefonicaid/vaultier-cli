@@ -263,6 +263,13 @@ def add_secret_file(args):
     except Exception as e:
         raise SystemExit(e)
 
+def delete_secret(args):
+    client = configure_client(args)
+    try:
+        client.delete_secret(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -383,6 +390,11 @@ def main():
     parser_add_secret_file.add_argument('-p', '--password', metavar='password', help='optional password')
     parser_add_secret_file.add_argument('-n', '--note', metavar='note', help='optional note')
     parser_add_secret_file.set_defaults(func=add_secret_file)
+
+    """Add all options for get file command"""
+    parser_delete_secret = subparsers.add_parser('delete-secret', help='Delete a secret')
+    parser_delete_secret.add_argument('id', metavar='id', help='secret id')
+    parser_delete_secret.set_defaults(func=delete_secret)
 
     """Parse command arguments"""
     args = parser.parse_args()

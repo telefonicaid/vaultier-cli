@@ -250,6 +250,14 @@ class Client(object):
         if type == 'file' and file:
             self.upload_file(new_secret['id'], workspace_key, file)
 
+    def delete_secret(self, secret_id):
+        """
+        Delete a Secret
+
+        :param secret_id: Secret unique ID given by list_secrets
+        """
+        self.fetch_json('/api/secrets/{}/'.format(secret_id), http_method='DELETE')
+
     def upload_file(self, secret_id, workspace_key, file):
         with file as f:
             filedata = {'filedata': str(f.read(), "iso-8859-1")}
@@ -276,7 +284,10 @@ class Client(object):
             raise Unauthorized('{0} at {1}'.format(response.text, url), response)
         if response.status_code == 403:
             raise Forbidden('{0} at {1}'.format(response.text, url), response)
-        if response.status_code not in {200, 201, 206}:
+        if response.status_code not in {200, 201, 204, 206}:
             raise ResourceUnavailable('{0} at {1}'.format(response.text, url), response)
 
-        return response.json()
+        if response.status_code == 204:
+            return {}
+        else:
+            return response.json()
