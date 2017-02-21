@@ -154,6 +154,46 @@ class Client(object):
         else:
             return [None, None]
 
+    def set_workspace(self, workspace_id, workspace_data):
+        """
+        Send workspace contents to existing workspace ID
+
+        :param workspace_id: workspace unique ID given by list_workspaces
+        :param workspace_data: Python dict with new contents
+        """
+        current_workspace_data = self.fetch_json('/api/workspaces/{}'.format(workspace_id))
+        if workspace_data.get('name', None) == None: workspace_data['name'] = current_workspace_data['name']
+        if workspace_data.get('description', None) == None: workspace_data['description'] = current_workspace_data['description']
+        self.fetch_json('/api/workspaces/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(workspace_data))
+
+
+    def set_vault(self, vault_id, vault_data):
+        """
+        Send vault contents to existing vault ID
+
+        :param vault_id: Vault unique ID given by list_vaults
+        :param vault_data: Python dict with new contents
+        """
+        current_vault_data = self.fetch_json('/api/vaults/{}'.format(vault_id))
+        if vault_data.get('name', None) == None: vault_data['name'] = current_vault_data['name']
+        if vault_data.get('description', None) == None: vault_data['description'] = current_vault_data['description']
+        if vault_data.get('color', None) == None: vault_data['color'] = current_vault_data['color']
+        vault_data['workspace'] = current_vault_data['workspace']
+        self.fetch_json('/api/vaults/{}/'.format(vault_id), http_method='PUT', data=json.dumps(vault_data))
+
+    def set_card(self, card_id, card_data):
+        """
+        Send card contents to existing card ID
+
+        :param card_id: Card unique ID given by list_cards
+        :param card_data: Python dict with new contents
+        """
+        current_card_data = self.fetch_json('/api/cards/{}'.format(card_id))
+        if card_data.get('name', None) == None: card_data['name'] = current_card_data['name']
+        if card_data.get('description', None) == None: card_data['description'] = current_card_data['description']
+        card_data['vault'] = current_card_data['vault']
+        self.fetch_json('/api/cards/{}/'.format(card_id), http_method='PUT', data=json.dumps(card_data))
+
     def set_secret(self, secret, file=None):
         """
         Send secret contents to existing secret ID
