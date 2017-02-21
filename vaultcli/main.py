@@ -100,7 +100,10 @@ def configure_client(args):
 def tree_workspace(args):
     client = configure_client(args)
     vault_list = []
-    workspace_name = client.get_workspace_name(args.id)
+    try:
+        workspace_name = client.get_workspace_name(args.id)
+    except Exception as e:
+        raise SystemExit(e)
     vaults = client.list_vaults(args.id)
     for vault in vaults:
         card_list = []
@@ -270,6 +273,27 @@ def delete_secret(args):
     except Exception as e:
         raise SystemExit(e)
 
+def delete_card(args):
+    client = configure_client(args)
+    try:
+        client.delete_card(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+
+def delete_vault(args):
+    client = configure_client(args)
+    try:
+        client.delete_vault(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+
+def delete_workspace(args):
+    client = configure_client(args)
+    try:
+        client.delete_workspace(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+
 def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
@@ -391,10 +415,25 @@ def main():
     parser_add_secret_file.add_argument('-n', '--note', metavar='note', help='optional note')
     parser_add_secret_file.set_defaults(func=add_secret_file)
 
-    """Add all options for get file command"""
+    """Add all options for delete secret command"""
     parser_delete_secret = subparsers.add_parser('delete-secret', help='Delete a secret')
     parser_delete_secret.add_argument('id', metavar='id', help='secret id')
     parser_delete_secret.set_defaults(func=delete_secret)
+
+    """Add all options for delete card command"""
+    parser_delete_card = subparsers.add_parser('delete-card', help='Delete a card')
+    parser_delete_card.add_argument('id', metavar='id', help='card id')
+    parser_delete_card.set_defaults(func=delete_card)
+
+    """Add all options for delete vault command"""
+    parser_delete_vault = subparsers.add_parser('delete-vault', help='Delete a vault')
+    parser_delete_vault.add_argument('id', metavar='id', help='vault id')
+    parser_delete_vault.set_defaults(func=delete_vault)
+
+    """Add all options for delete workspace command"""
+    parser_delete_workspace = subparsers.add_parser('delete-workspace', help='Delete a workspace')
+    parser_delete_workspace.add_argument('id', metavar='id', help='workspace id')
+    parser_delete_workspace.set_defaults(func=delete_workspace)
 
     """Parse command arguments"""
     args = parser.parse_args()
