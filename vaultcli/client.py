@@ -258,6 +258,30 @@ class Client(object):
         """
         self.fetch_json('/api/secrets/{}/'.format(secret_id), http_method='DELETE')
 
+    def delete_card(self, card_id):
+        """
+        Delete a card
+
+        :param card_id: card unique ID given by list_cards
+        """
+        self.fetch_json('/api/cards/{}/'.format(card_id), http_method='DELETE')
+
+    def delete_vault(self, vault_id):
+        """
+        Delete a vault
+
+        :param vault_id: vault unique ID given by list_vaults
+        """
+        self.fetch_json('/api/vaults/{}/'.format(vault_id), http_method='DELETE')
+
+    def delete_workspace(self, workspace_id):
+        """
+        Delete a workspace
+
+        :param workspace_id: workspace unique ID given by list_workspaces
+        """
+        self.fetch_json('/api/workspaces/{}/'.format(workspace_id), http_method='DELETE')
+
     def upload_file(self, secret_id, workspace_key, file):
         with file as f:
             filedata = {'filedata': str(f.read(), "iso-8859-1")}
