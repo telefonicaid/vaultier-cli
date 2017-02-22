@@ -133,7 +133,7 @@ def list_secrets(args):
     client = configure_client(args)
     print_secrets(client.list_secrets(args.id))
 
-def get_secret(args):
+def show_secret(args):
     client = configure_client(args)
     try:
         secret = client.get_secret(args.id)
@@ -378,17 +378,17 @@ def main():
     parser_list_secrets.set_defaults(func=list_secrets)
 
     """Add all options for get secret command"""
-    parser_get_secret = subparsers.add_parser('get-secret', help='Get secret contents')
-    parser_get_secret.add_argument('id', metavar='id', help='secret id')
-    parser_get_secret.add_argument('-l', '--url', action='store_true', help='get url')
-    parser_get_secret.add_argument('-u', '--username', action='store_true', help='get username')
-    parser_get_secret.add_argument('-p', '--password', action='store_true', help='get password')
-    parser_get_secret.add_argument('-n', '--note', action='store_true', help='get note')
-    parser_get_secret.add_argument('--name', action='store_true', help='get name')
-    parser_get_secret.add_argument('--file-name', action='store_true', help='get file name')
-    parser_get_secret.add_argument('--file-size', action='store_true', help='get file size')
-    parser_get_secret.add_argument('--type', action='store_true', help='get type (numeric)')
-    parser_get_secret.set_defaults(func=get_secret)
+    parser_show_secret = subparsers.add_parser('show-secret', help='Show secret contents')
+    parser_show_secret.add_argument('id', metavar='id', help='secret id')
+    parser_show_secret.add_argument('-l', '--url', action='store_true', help='show url')
+    parser_show_secret.add_argument('-u', '--username', action='store_true', help='show username')
+    parser_show_secret.add_argument('-p', '--password', action='store_true', help='show password')
+    parser_show_secret.add_argument('-n', '--note', action='store_true', help='show note')
+    parser_show_secret.add_argument('--name', action='store_true', help='show name')
+    parser_show_secret.add_argument('--file-name', action='store_true', help='show file name')
+    parser_show_secret.add_argument('--file-size', action='store_true', help='show file size')
+    parser_show_secret.add_argument('--type', action='store_true', help='show type (numeric)')
+    parser_show_secret.set_defaults(func=show_secret)
 
     """Add all options for get file command"""
     parser_get_file = subparsers.add_parser('get-file', help='Get binary file from a secret')
