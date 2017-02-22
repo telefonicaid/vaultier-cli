@@ -183,6 +183,52 @@ def get_file(args):
                 msg = 'Nothing to do'
                 raise SystemExit(msg)
 
+def edit_workspace(args):
+    if args.name == None and args.description == None:
+        err = 'No action requested'
+        raise SystemExit(err)
+    client = configure_client(args)
+    workspace_data = {
+            'id': args.id,
+            'name': args.name,
+            'description': args.description
+                }
+    try:
+        client.set_workspace(args.id, workspace_data)
+    except Exception as e:
+        raise SystemExit(e)
+
+def edit_vault(args):
+    if args.name == None and args.description == None and args.color == None:
+        err = 'No action requested'
+        raise SystemExit(err)
+    client = configure_client(args)
+    vault_data = {
+            'id': args.id,
+            'name': args.name,
+            'description': args.description,
+            'color': args.color
+                 }
+    try:
+        client.set_vault(args.id, vault_data)
+    except Exception as e:
+        raise SystemExit(e)
+
+def edit_card(args):
+    if args.name == None and args.description == None:
+        err = 'No action requested'
+        raise SystemExit(err)
+    client = configure_client(args)
+    card_data = {
+            'id': args.id,
+            'name': args.name,
+            'description': args.description
+                }
+    try:
+        client.set_card(args.id, card_data)
+    except Exception as e:
+        raise SystemExit(e)
+
 def edit_secret(args):
     if all(arg == None for arg in (args.url, args.username, args.password, args.note, args.file, args.name)):
         err = 'No action requested'
@@ -349,6 +395,28 @@ def main():
     parser_get_file.add_argument('id', metavar='id', help='secret id')
     parser_get_file.add_argument('-o', '--output', metavar='file' , help='output file (path must exists)')
     parser_get_file.set_defaults(func=get_file)
+
+    """Add all options for edit workspace command"""
+    parser_edit_workspace = subparsers.add_parser('edit-workspace', help='Edit workspace name or description')
+    parser_edit_workspace.add_argument('id', metavar='id', help='workspace id')
+    parser_edit_workspace.add_argument('-n', '--name', metavar='name', help='workspace name')
+    parser_edit_workspace.add_argument('-d', '--description', metavar='description', help='workspace description')
+    parser_edit_workspace.set_defaults(func=edit_workspace)
+
+    """Add all options for edit vault command"""
+    parser_edit_vault = subparsers.add_parser('edit-vault', help='Edit vault name, description or color')
+    parser_edit_vault.add_argument('id', metavar='id', help='vault id')
+    parser_edit_vault.add_argument('-n', '--name', metavar='name', help='vault name')
+    parser_edit_vault.add_argument('-d', '--description', metavar='description', help='vault description')
+    parser_edit_vault.add_argument('--color', choices=['blue', 'orange', 'purple', 'green', 'red'], help='vault color')
+    parser_edit_vault.set_defaults(func=edit_vault)
+
+    """Add all options for edit card command"""
+    parser_edit_card = subparsers.add_parser('edit-card', help='Edit card name or description')
+    parser_edit_card.add_argument('id', metavar='id', help='card id')
+    parser_edit_card.add_argument('-n', '--name', metavar='name', help='card name')
+    parser_edit_card.add_argument('-d', '--description', metavar='description', help='card description')
+    parser_edit_card.set_defaults(func=edit_card)
 
     """Add all options for edit secret command"""
     parser_edit_secret = subparsers.add_parser('edit-secret', help='Edit secret contents')
