@@ -1,0 +1,107 @@
+#compdef vaultcli
+
+typeset -A opt_args
+
+_vaultcli_commands() {
+  local -a _commands
+  _commands=(
+    'add-card:Add new card to a vault'
+    'add-secret:Add new secret to a card'
+    'add-vault:Add new vault to a workspace'
+    'add-workspace:Add new Vaultier workspace'
+    'config:Configure vaultcli'
+    'delete-card:Delete a card'
+    'delete-secret:Delete a secret'
+    'delete-vault:Delete a vault'
+    'delete-workspace:Delete a workspace'
+    'edit-card:Edit card name or description'
+    'edit-secret:Edit secret contents'
+    'edit-vault:Edit vault name, description or color'
+    'edit-workspace:Edit workspace name or description'
+    'get-file:Get binary file from a secret'
+    'list-cards:List cards from a vault'
+    'list-secrets:List secrets from a card'
+    'list-vaults:List vaults from a workspace'
+    'list-workspaces:List Vaultier workspaces'
+    'show-secret:Show secret contents'
+    'tree-workspace:List workspace as tree'
+  )
+  _describe 'command' _commands
+}
+
+_arguments \
+  '(-h --help)'{-h,--help}'[Show help]' \
+  '(-c --config)'{-c,--config}'[Use custom configuration file]:configuration file:_files' \
+  '1: :_vaultcli_commands' \
+  '*:: :->args'
+
+case ${words[1]} in
+  add-card)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-d --description)'{-d,--description}'[card description]:description'
+    ;;
+  add-vault)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-d --description)'{-d,--description}'[vault description]:description' \
+      '--color[vault color]: :(blue orange purple green red)'
+    ;;
+  add-workspace)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-d --description)'{-d,--description}'[workspace description]:description'
+    ;;
+  edit-card)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-n --name)'{-n,--name}'[card name]:name' \
+      '(-d --description)'{-d,--description}'[card description]:description'
+    ;;
+  edit-secret)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-l --url)'{-l,--url}'[edit url]:url' \
+      '(-u --username)'{-u,--username}'[edit username]:username' \
+      '(-p --password)'{-p,--password}'[edit password]:password' \
+      '(-n --note)'{-n,--note}'[edit note]:note' \
+      '(-f --file)'{-f,--file}'[change file]:file:_files' \
+      '--name[edit name]:name'
+    ;;
+  edit-vault)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-n --name)'{-n,--name}'[vault name]:name' \
+      '(-d --description)'{-d,--description}'[vault description]:description' \
+      '--color[vault color]: :(blue orange purple green red)'
+    ;;
+  edit-workspace)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-n --name)'{-n,--name}'[workspace name]:name' \
+      '(-d --description)'{-d,--description}'[workspace description]:description'
+    ;;
+  get-file)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-o --output)'{-o,--output}'[output file (path must exists)]:file:_files'
+    ;;
+  show-secret)
+     _arguments \
+       '(-h --help)'{-h,--help}'[Show help]' \
+       '(-l --url)'{-l,--url}'[show url]' \
+       '(-u --username)'{-u,--username}'[show username]' \
+       '(-p --password)'{-p,--password}'[show password]' \
+       '(-n --note)'{-n,--note}'[show note]' \
+       '--name[show name]' \
+       '--file-name[show file name]' \
+       '--file-size[show file size]' \
+       '--type[show type (numeric)]'
+    ;;
+  add-secret | config | delete-card | delete-secret | delete-vault | \
+    delete-workspace | list-cards | list-secrets | list-vaults | \
+    tree-workspace | list-workspaces)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]'
+    ;;
+esac
