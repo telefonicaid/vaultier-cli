@@ -10,7 +10,7 @@
 from vaultcli.workspacecypher import WorkspaceCypher
 from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 
-from Crypto.Hash import SHA
+from Cryptodome.Hash import SHA
 from urllib.parse import urljoin
 
 import binascii
