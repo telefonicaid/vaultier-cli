@@ -7,9 +7,9 @@
 #
 # Distributed under terms of the GNU GPLv3 license.
 
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5
-from Crypto.Signature import PKCS1_v1_5 as PKCS_sign
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Cipher import PKCS1_v1_5
+from Cryptodome.Signature import PKCS1_v1_5 as PKCS_sign
 
 import binascii
 
