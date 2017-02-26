@@ -14,6 +14,7 @@ from vaultcli.views import print_tree, print_workspaces, print_vaults, print_car
 from vaultcli.helpers import query_yes_no
 
 import argparse
+import json
 import os
 
 def get_config_file(args):
@@ -97,11 +98,51 @@ def configure_client(args):
     token = Auth(server, email, key).get_token()
     return Client(server, token, key)
 
+def export_workspace(args):
+    client = configure_client(args)
+    try:
+        workspace = client.get_workspace(args.id)
+    except Exception as e:
+        raise SystemExit(e)
+    workspace_data = {
+            'name': workspace.name,
+            'description': workspace.description,
+            'vaults': []
+                     }
+    vaults = client.list_vaults(args.id)
+    for vault in vaults:
+        vault_data = {
+                'name': vault.name,
+                'description': vault.description,
+                'color': vault.color,
+                'cards': []
+                     }
+        cards = client.list_cards(vault.id)
+        for card in cards:
+            card_data = {
+                    'name': card.name,
+                    'description': card.description,
+                    'secrets': []
+                        }
+            secrets = client.list_secrets(card.id)
+            for secret in secrets:
+                secret = client.decrypt_secret(secret, workspace.workspaceKey)
+                secret_data = {
+                        'name': secret.name,
+                        'type': secret.type
+                              }
+                if secret.data: secret_data.update(secret.data)
+                if secret.blobMeta: secret_data.update(secret.blobMeta)
+                card_data['secrets'].append(secret_data)
+            vault_data['cards'].append(card_data)
+        workspace_data['vaults'].append(vault_data)
+    print(json.dumps(workspace_data))
+
 def tree_workspace(args):
     client = configure_client(args)
     vault_list = []
     try:
-        workspace_name = client.get_workspace_name(args.id)
+        workspace_name = client.get_workspace(args.id).name
     except Exception as e:
         raise SystemExit(e)
     vaults = client.list_vaults(args.id)
@@ -357,6 +398,11 @@ def main():
     parser_tree_workspace = subparsers.add_parser('tree-workspace', help='List workspace as tree')
     parser_tree_workspace.add_argument('id', metavar='id', help='workspace id')
     parser_tree_workspace.set_defaults(func=tree_workspace)
+
+    """Add all options for export command"""
+    parser_export_workspace = subparsers.add_parser('export-workspace', help='Export all contents of a workspace')
+    parser_export_workspace.add_argument('id', metavar='id', help='workspace id')
+    parser_export_workspace.set_defaults(func=export_workspace)
 
     """Add all options for list workspaces command"""
     parser_list_workspaces = subparsers.add_parser('list-workspaces', help='List Vaultier workspaces')
