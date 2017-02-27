@@ -39,6 +39,10 @@ class Auth(object):
         return self.fetch_json('/api/auth/auth', http_method='POST', data=data)['token']
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+        """Fetch JSON from API"""
+        if verify != True:
+            requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+
         """Construct the full URL"""
         url = urljoin(self.server, uri_path)
 
