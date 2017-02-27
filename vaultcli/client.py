@@ -334,6 +334,8 @@ class Client(object):
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
+        if verify != True:
+            requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
         headers['X-Vaultier-Token'] = self.token
         if http_method in ('POST', 'PUT', 'DELETE') and not files:
             headers['Content-Type'] = 'application/json; charset=utf-8'
