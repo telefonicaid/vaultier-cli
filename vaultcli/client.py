@@ -102,16 +102,23 @@ class Client(object):
         json_obj = self.fetch_json('/api/secrets/?card={}'.format(card_id))
         return [Secret.from_json(obj) for obj in json_obj]
 
-    def get_workspace_name(self, workspace_id):
+    def get_workspace(self, workspace_id):
         """
-        Returns a Workspace name form id
+        Returns a Workspace from an ID
 
         :param workspace_id: Workspace unique ID given by list_workspaces
-        :return: workspace name
-        :rtype: string
+        :return: a workspace object
+        :rtype: Workspace
+
+        The workspace has the following atributes:
+            - id: workspace unique id
+            - slug: workspace name slugged
+            - name: workspace name
+            - description: workspace description
+            - workspaceKey: workspace key
         """
         json_obj = self.fetch_json('/api/workspaces/{}/'.format(workspace_id))
-        return json_obj['name']
+        return Workspace.from_json(json_obj)
 
     def get_secret(self, secret_id):
         """
@@ -154,6 +161,24 @@ class Client(object):
             return [file_name, file_data]
         else:
             return [None, None]
+
+    def decrypt_secret(self, secret, workspace_key):
+        """
+        Returns given Secret desencrypted
+
+        :param secret: secret object with data encrypted
+        :param workspace_key: key string to decrypt data
+        :return: a secret object
+        :rtype: Secret
+        """
+        # If has data decrypt it with workspace_key
+        if secret.data:
+            secret.data = json.loads(Cypher(self.key).decrypt(workspace_key, secret.data))
+        # If has meta decrypt it with workspace_key
+        if secret.blobMeta:
+            secret.blobMeta = json.loads(Cypher(self.key).decrypt(workspace_key, secret.blobMeta))
+
+        return secret
 
     def set_workspace(self, workspace_id, workspace_data):
         """

@@ -18,6 +18,7 @@ _vaultcli_commands() {
     'edit-secret:Edit secret contents'
     'edit-vault:Edit vault name, description or color'
     'edit-workspace:Edit workspace name or description'
+    'export-workspace:Export all contents of a workspace'
     'get-file:Get binary file from a secret'
     'list-cards:List cards from a vault'
     'list-secrets:List secrets from a card'
