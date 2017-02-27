@@ -17,6 +17,7 @@ from vaultcli.exceptions import ResourceUnavailable, Unauthorized, Forbidden
 from urllib.parse import urljoin
 from os.path import basename
 from mimetypes import MimeTypes
+from functools import lru_cache
 
 import json
 import requests
@@ -332,6 +333,7 @@ class Client(object):
         files = {'blob_data': ('blob', encrypted_filedata, 'application/octet-stream'), 'blob_meta': (None, encrypted_filemeta)}
         self.fetch_json('/api/secret_blobs/{}/'.format(secret_id), http_method='PUT', headers={}, files=files)
 
+    @lru_cache(maxsize=150)
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         if verify != True:
