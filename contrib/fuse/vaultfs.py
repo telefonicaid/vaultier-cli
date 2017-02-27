@@ -34,6 +34,7 @@ import errno
 import llfuse
 import json
 from vaultcli import main as vault_main
+from functools import lru_cache
 
 try:
     import faulthandler
@@ -64,6 +65,7 @@ class TestFs(llfuse.Operations):
         self.hello_data = b"hello world\n"
         self.vault = vault
 
+    @lru_cache(maxsize=32)
     def getattr(self, inode, ctx=None):
         """
         Obtenemos las propiedades de un inodo
@@ -86,7 +88,7 @@ class TestFs(llfuse.Operations):
             entry.st_mode = (stat.S_IFREG | 0o644)
             secret_id = inode - SECRET_BASE_INODO
             log.debug("Obteniendo len(get_secret(%s).data)", secret_id)
-            data = bytes(json.dumps(self.vault.get_secret(secret_id).data), "UTF-8")
+            data = bytes(json.dumps(self.get_secret(secret_id).data), "UTF-8")
             entry.st_size = len(data)
 
         stamp = int(1438467123.985654 * 1e9)
@@ -119,22 +121,22 @@ class TestFs(llfuse.Operations):
 
         if parent_inode == 1:
             log.info("ROOT path del punto de montaje. Retornar workspaces")
-            wks = self.vault.list_workspaces()
+            wks = self.list_workspaces()
             inode = self._get_id_from_name(wks, name) + WORKSPACE_BASE_INODO
         elif parent_inode >= WORKSPACE_BASE_INODO and parent_inode < VAULT_BASE_INODO:
             log.info("Es un workspace. Retornar vaults")
             wks_id = parent_inode - WORKSPACE_BASE_INODO
-            vaults = self.vault.list_vaults(wks_id)
+            vaults = self.list_vaults(wks_id)
             inode = self._get_id_from_name(vaults, name) + VAULT_BASE_INODO
         elif parent_inode >= VAULT_BASE_INODO and parent_inode < CARD_BASE_INODO:
             log.info("Es un vault. Retornar cards")
             vault_id = parent_inode - VAULT_BASE_INODO
-            cards = self.vault.list_cards(vault_id)
+            cards = self.list_cards(vault_id)
             inode = self._get_id_from_name(cards, name) + CARD_BASE_INODO
         elif parent_inode >= CARD_BASE_INODO and parent_inode < SECRET_BASE_INODO:
             log.info("Es una card. Retornar secrets")
             card_id = parent_inode - CARD_BASE_INODO
-            secrets = self.vault.list_secrets(card_id)
+            secrets = self.list_secrets(card_id)
             inode = self._get_id_from_name(secrets, name) + SECRET_BASE_INODO
         else:
             log.info("Es un secret. Retornar el contenido")
@@ -144,6 +146,7 @@ class TestFs(llfuse.Operations):
 
         return self.getattr(inode, ctx)
 
+    @lru_cache(maxsize=32)
     def opendir(self, inode, ctx):
         """
         Aqui transformamos el inodo en un filehandle que se pasara a reddir, fsyncdir y releasedir
@@ -162,7 +165,7 @@ class TestFs(llfuse.Operations):
 
         if fh == 1:
             log.info("ROOT path del punto de montaje. Retornar workspaces")
-            for i,v in enumerate(self.vault.list_workspaces()):
+            for i,v in enumerate(self.list_workspaces()):
                 # Skip elementos segun off
                 if off > i:
                     continue
@@ -172,7 +175,7 @@ class TestFs(llfuse.Operations):
             log.info("Es un workspace. Retornar vaults")
             idx = fh - WORKSPACE_BASE_INODO
             log.debug("Obteniendo vaults para el workspace %s", idx)
-            for i,v in enumerate(self.vault.list_vaults(idx)):
+            for i,v in enumerate(self.list_vaults(idx)):
                 # Skip elementos segun off
                 if off > i:
                     continue
@@ -182,7 +185,7 @@ class TestFs(llfuse.Operations):
             log.info("Es un vault. Retornar cards")
             idx = fh - VAULT_BASE_INODO
             log.debug("Obteniendo cards para el vault %s", idx)
-            for i,v in enumerate(self.vault.list_cards(idx)):
+            for i,v in enumerate(self.list_cards(idx)):
                 # Skip elementos segun off
                 if off > i:
                     continue
@@ -192,7 +195,7 @@ class TestFs(llfuse.Operations):
             log.info("Es una card. Retornar secrets")
             idx = fh - CARD_BASE_INODO
             log.debug("Obteniendo secrets para la card %s", idx)
-            for i,v in enumerate(self.vault.list_secrets(idx)):
+            for i,v in enumerate(self.list_secrets(idx)):
                 # Skip elementos segun off
                 if off > i:
                     continue
@@ -201,7 +204,30 @@ class TestFs(llfuse.Operations):
         else:
             log.info("Es un secret. Retornar el contenido")
 
+    # Cache vaultier responses
+    @lru_cache(maxsize=32)
+    def list_workspaces(self):
+        return self.vault.list_workspaces()
 
+    @lru_cache(maxsize=32)
+    def list_vaults(self, idx):
+        return self.vault.list_vaults(idx)
+
+    @lru_cache(maxsize=32)
+    def list_cards(self, idx):
+        return self.vault.list_cards(idx)
+
+    @lru_cache(maxsize=32)
+    def list_secrets(self, idx):
+        return self.vault.list_secrets(idx)
+
+    @lru_cache(maxsize=32)
+    def get_secret(self, idx):
+        return self.vault.get_secret(idx)
+
+
+
+    @lru_cache(maxsize=32)
     def open(self, inode, flags, ctx):
         """
         Retorna un filehandler con el fichero abierto.
@@ -215,6 +241,7 @@ class TestFs(llfuse.Operations):
         #    raise llfuse.FUSEError(errno.EPERM)
         return inode
 
+    @lru_cache(maxsize=32)
     def read(self, fh, off, size):
         """
         Leemos 'size' bytes del fichero 'fh' empezando en 'off'
@@ -222,13 +249,13 @@ class TestFs(llfuse.Operations):
         """
         log.info("%s (fh=%s, off=%s, size=%s)" % (sys._getframe().f_code.co_name, fh, off, size))
         secret_id = fh - SECRET_BASE_INODO
-        data = bytes(json.dumps(self.vault.get_secret(secret_id).data), "UTF-8")
+        data = bytes(json.dumps(self.get_secret(secret_id).data), "UTF-8")
         return data[off:off+size]
 
 def init_logging(debug=False):
     #formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(threadName)s: '
     #                              '[%(name)s] %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
-    formatter = logging.Formatter('%(filename)s:%(lineno)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(filename)s:%(lineno)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
