@@ -74,6 +74,14 @@ def write_binary_file(file_name, file_contents):
         err = 'vaultcli cannot write file.\n{0}'.format(e)
         raise SystemExit(err)
 
+def write_json_file(file_name, file_contents):
+    try:
+        with open(file_name, 'w') as file:
+            json.dump(file_contents, file)
+    except Exception as e:
+        err = 'vaultcli cannot write file.\n{0}'.format(e)
+        raise SystemExit(err)
+
 def configure_client(args):
     # Get config in object
     config_file = get_config_file(args)
@@ -104,7 +112,14 @@ def export_workspace(args):
         workspace = client.get_workspace(args.id)
     except Exception as e:
         raise SystemExit(e)
+    directory = os.path.abspath(args.directory)
+    if not os.path.isdir(directory):
+        try:
+            os.makedirs(directory)
+        except Exception as e:
+            raise SystemExit(e)
     workspace_data = {
+            'id': workspace.id,
             'name': workspace.name,
             'description': workspace.description,
             'vaults': []
@@ -112,6 +127,7 @@ def export_workspace(args):
     vaults = client.list_vaults(args.id)
     for vault in vaults:
         vault_data = {
+                'id': vault.id,
                 'name': vault.name,
                 'description': vault.description,
                 'color': vault.color,
@@ -120,6 +136,7 @@ def export_workspace(args):
         cards = client.list_cards(vault.id)
         for card in cards:
             card_data = {
+                    'id': card.id,
                     'name': card.name,
                     'description': card.description,
                     'secrets': []
@@ -128,15 +145,23 @@ def export_workspace(args):
             for secret in secrets:
                 secret = client.decrypt_secret(secret, workspace.workspaceKey)
                 secret_data = {
+                        'id': secret.id,
                         'name': secret.name,
                         'type': secret.type
                               }
                 if secret.data: secret_data.update(secret.data)
-                if secret.blobMeta: secret_data.update(secret.blobMeta)
+                if secret.blobMeta:
+                    secret_data.update(secret.blobMeta)
+                    secret_file = client.get_file(secret.id)
+                    if secret_file != [None, None]:
+                        os.makedirs(os.path.join(directory, str(secret.id)), exist_ok=True)
+                        file_name = os.path.join(directory, str(secret.id), secret_file[0])
+                        write_binary_file(file_name, secret_file[1])
                 card_data['secrets'].append(secret_data)
             vault_data['cards'].append(card_data)
         workspace_data['vaults'].append(vault_data)
-    print(json.dumps(workspace_data))
+    json_file = os.path.join(directory, '{}.json'.format(workspace.name))
+    write_json_file(json_file, workspace_data)
 
 def tree_workspace(args):
     client = configure_client(args)
@@ -209,7 +234,7 @@ def get_file(args):
         file = client.get_file(args.id)
     except Exception as e:
         raise SystemExit(e)
-    if not file:
+    if file == [None, None]:
         msg = 'No file'
         raise SystemExit(msg)
     else:
@@ -402,6 +427,7 @@ def main():
     """Add all options for export command"""
     parser_export_workspace = subparsers.add_parser('export-workspace', help='Export all contents of a workspace')
     parser_export_workspace.add_argument('id', metavar='id', help='workspace id')
+    parser_export_workspace.add_argument('directory', metavar='directory' , help='output directory (will be created if not exists)')
     parser_export_workspace.set_defaults(func=export_workspace)
 
     """Add all options for list workspaces command"""
