@@ -253,12 +253,17 @@ class Client(object):
         # Create new workspace
         json_obj = self.fetch_json('/api/workspaces/', http_method='POST', data=json.dumps(data))
         workspace_id = json_obj['membership']['id']
+        json_obj = self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id))
         # Set a new key for the new workspace
         data = {
                 'id': workspace_id,
+                'public_key': json_obj['public_key'],
+                'status': '200',
+                'user': json_obj['user'],
+                'workspace': json_obj['workspace'],
                 'workspace_key': Cypher(self.key).gen_workspace_key()
                }
-        self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
+        return self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
 
     def add_vault(self, ws_id, v_name, v_description=None, v_color=None):
         """
@@ -275,7 +280,7 @@ class Client(object):
                }
         if v_description: data['description'] = v_description
         if v_color: data['color'] = v_color
-        self.fetch_json('/api/vaults/', http_method='POST', data=json.dumps(data))
+        return self.fetch_json('/api/vaults/', http_method='POST', data=json.dumps(data))
 
     def add_card(self, v_id, c_name, c_description=None):
         """
@@ -290,7 +295,7 @@ class Client(object):
                 'name': c_name
                }
         if c_description: data['description'] = c_description
-        self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
+        return self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
 
     def add_secret(self, card_id, secret_name, json_obj, type='password', file=None):
         """
