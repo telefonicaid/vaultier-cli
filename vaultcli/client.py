@@ -358,8 +358,27 @@ class Client(object):
         files = {'blob_data': ('blob', encrypted_filedata, 'application/octet-stream'), 'blob_meta': (None, encrypted_filemeta)}
         self.fetch_json('/api/secret_blobs/{}/'.format(secret_id), http_method='PUT', headers={}, files=files)
 
-    @lru_cache(maxsize=150)
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+        """
+        To be able to cache requests, no param could be a dict o an array.
+        This function split requests in cacheables and not cacheables.
+        We also filter to only cache GET functions. Other verbs should not be cached (we don't want to skip a delete)
+        """
+        if http_method == "GET" and headers == {} and params == {} and data == None and files == None:
+            return self.fetch_json_cached(uri_path, http_method, headers, params, data, files, verify)
+        else:
+            return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
+
+    @lru_cache(maxsize=150)
+    def fetch_json_cached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+        """
+        Function with caching.
+        Cache will remember uri_path for the last 150 requests and return the stored response.
+        This speed up vaultier FUSE
+        """
+        return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
+
+    def fetch_json_real(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         if verify != True:
             requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
