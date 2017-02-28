@@ -227,12 +227,10 @@ def import_workspace(args):
                                                         else:
                                                             if attached_file != '':
                                                                 types = {100: 'note', 200: 'password', 300: 'file'}
-                                                                #if secret['type'] == 100:
-                                                                #    print (new_card['id'])
-                                                                #    print (secret['name'])
-                                                                #    print (secret['data'])
-                                                                #    client.add_secret(new_card['id'], secret['name'], secret['data'], 'note')
-                                                                client.add_secret(new_card['id'], secret['name'], secret['data'], types[secret['type']], attached_file)
+                                                                try:
+                                                                    client.add_secret(new_card['id'], secret['name'], secret['data'], types[secret['type']], attached_file)
+                                                                except Exception as e:
+                                                                    raise SystemExit(e)
                                                     else:
                                                         err = 'Seems that provided file has not correct format in one secret'
                                                         raise SystemExit(err)
