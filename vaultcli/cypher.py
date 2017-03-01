@@ -28,8 +28,8 @@ class Cypher(object):
         data_cypher = DataCypher(decrypted_workspace_key)
         return data_cypher.encrypt(plain_data)
 
-    def gen_workspace_key(self, size=46):
-        random_key = secrets.token_bytes(size)
+    def gen_workspace_key(self, size=32):
+        random_key = (''.join(chr(secrets.randbelow(255)) for _ in range(size))).encode()
         work_space_cypher = WorkspaceCypher(self.key)
         new_workspace_key = work_space_cypher.encrypt(random_key)
         return new_workspace_key.decode()
