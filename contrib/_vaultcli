@@ -20,6 +20,7 @@ _vaultcli_commands() {
     'edit-workspace:Edit workspace name or description'
     'export-workspace:Export all contents of a workspace'
     'get-file:Get binary file from a secret'
+    'import-workspace:Import a workspace from a JSON file'
     'list-cards:List cards from a vault'
     'list-secrets:List secrets from a card'
     'list-vaults:List vaults from a workspace'
@@ -82,10 +83,22 @@ case ${words[1]} in
       '(-n --name)'{-n,--name}'[workspace name]:name' \
       '(-d --description)'{-d,--description}'[workspace description]:description'
     ;;
+  export-workspace)
+    _arguments -n \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '1:id:' \
+      '2:directory:_files'
+    ;;
   get-file)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
       '(-o --output)'{-o,--output}'[output file (path must exists)]:file:_files'
+    ;;
+  import-workspace)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '(-i --use-ids)'{-i,--use-ids}'[try to use IDs to modify existing data]' \
+      '1:file:_files'
     ;;
   show-secret)
      _arguments \
