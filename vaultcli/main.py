@@ -10,12 +10,14 @@
 from vaultcli.auth import Auth
 from vaultcli.client import Client
 from vaultcli.config import Config
+from vaultcli.secret import Secret
 from vaultcli.views import print_tree, print_workspaces, print_vaults, print_cards, print_secrets, print_secret
 from vaultcli.helpers import query_yes_no
 
 import argparse
 import json
 import os
+import sys
 
 def get_config_file(args):
     if args.config:
@@ -106,6 +108,151 @@ def configure_client(args):
     token = Auth(server, email, key).get_token()
     return Client(server, token, key)
 
+def import_workspace(args):
+    try:
+        with args.file as file:
+            data = json.load(file)
+    except Exception as e:
+        err = 'vaultcli cannot read json file.\n{0}'.format(e)
+        raise SystemExit(err)
+    if 'name' in data:
+        client = configure_client(args)
+        if args.use_ids:
+            if 'id' in data:
+                workspace_data = {
+                        'id': data['id'],
+                        'name': data['name'],
+                        'description': data.get('description')
+                                 }
+                try:
+                    client.set_workspace(data['id'], workspace_data)
+                except Exception as e:
+                    raise SystemExit(e)
+            else:
+                err = 'Cannot use workspace ID because not provided in file'
+                raise SystemExit(err)
+        else:
+            try:
+                new_workspace = client.add_workspace(data['name'], data.get('description'))
+            except Exception as e:
+                raise SystemExit(e)
+        if 'vaults' in data:
+            if isinstance(data['vaults'], list):
+                for vault in data['vaults']:
+                    if 'name' in vault:
+                        if args.use_ids:
+                            if 'id' in vault:
+                                vault_data = {
+                                        'id': vault['id'],
+                                        'name': vault['name'],
+                                        'description': vault.get('description'),
+                                        'color': vault.get('color')
+                                             }
+                                try:
+                                    client.set_vault(vault['id'], vault_data)
+                                except Exception as e:
+                                    raise SystemExit(e)
+                            else:
+                                err = 'Cannot use vault ID because not provided in file'
+                                raise SystemExit(err)
+                        else:
+                            try:
+                                new_vault = client.add_vault(new_workspace['workspace']['id'], vault['name'], vault.get('description'), vault.get('color'))
+                            except Exception as e:
+                                raise SystemExit(e)
+                        if 'cards' in vault:
+                            if isinstance(vault['cards'], list):
+                                for card in vault['cards']:
+                                    if 'name' in card:
+                                        if args.use_ids:
+                                            if 'id' in card:
+                                                card_data = {
+                                                        'id': card['id'],
+                                                        'name': card['name'],
+                                                        'description': card.get('description')
+                                                            }
+                                                client.set_card(card['id'], card_data)
+                                            else:
+                                                err = 'Cannot use card ID because not provided in file'
+                                                raise SystemExit(err)
+                                        else:
+                                            try:
+                                                new_card = client.add_card(new_vault['id'], card['name'], card.get('description'))
+                                            except Exception as e:
+                                                raise SystemExit(e)
+                                        if 'secrets' in card:
+                                            if isinstance(card['secrets'], list):
+                                                for secret in card['secrets']:
+                                                    if ('type' and 'name') in secret:
+                                                        if 'data' in secret:
+                                                            # Complete missing data
+                                                            if secret['type'] == 100:
+                                                                secret_data = {'note': secret['data'].get('note', '')}
+                                                            else:
+                                                                secret_data = {
+                                                                        'url': secret['data'].get('url', ''),
+                                                                        'username': secret['data'].get('username', ''),
+                                                                        'password': secret['data'].get('password', ''),
+                                                                        'note': secret['data'].get('note', '')
+                                                                              }
+                                                            secret['data'] = secret_data
+                                                        else:
+                                                            secret['data'] = {}
+                                                        if secret['type'] == 300 and 'blob_meta' in secret and secret['blob_meta'].get('filename') != None:
+                                                            # Secret has an attached file, try to open it
+                                                            attachments_directory = os.path.dirname(os.path.realpath(args.file.name))
+                                                            attached_file_name = str(secret['blob_meta'].get('filename'))
+                                                            attached_file_path = os.path.join(attachments_directory, str(secret['id']), attached_file_name)
+                                                            try:
+                                                                attached_file = open(attached_file_path, 'rb')
+                                                            except Exception as e:
+                                                                print('WARNING: ignoring \'{}\' because cannot attach data, {}'.format(secret['name'], e), file=sys.stderr)
+                                                                attached_file = ''
+                                                        else:
+                                                            attached_file = None
+                                                        # Secret blob_meta is now unnecesary at this point cause is generated from attached_file
+                                                        secret['blob_meta'] = {}
+                                                        secret['card'] = card['id']
+                                                        if args.use_ids:
+                                                            if 'id' in secret:
+                                                                secret_obj = Secret.from_json(secret)
+                                                                if attached_file != '':
+                                                                    try:
+                                                                        client.set_secret(secret_obj, attached_file)
+                                                                    except Exception as e:
+                                                                        raise SystemExit(e)
+                                                            else:
+                                                                err = 'Cannot use secret ID because not provided in file'
+                                                                raise SystemExit(err)
+                                                        else:
+                                                            if attached_file != '':
+                                                                types = {100: 'note', 200: 'password', 300: 'file'}
+                                                                try:
+                                                                    client.add_secret(new_card['id'], secret['name'], secret['data'], types[secret['type']], attached_file)
+                                                                except Exception as e:
+                                                                    raise SystemExit(e)
+                                                    else:
+                                                        err = 'Seems that provided file has not correct format in one secret'
+                                                        raise SystemExit(err)
+                                            else:
+                                                err = 'Seems that provided file has not correct format in secrets'
+                                                raise SystemExit(err)
+                                    else:
+                                        err = 'Seems that provided file has not correct format in one card'
+                                        raise SystemExit(err)
+                            else:
+                                err = 'Seems that provided file has not correct format in cards'
+                                raise SystemExit(err)
+                    else:
+                        err = 'Seems that provided file has not correct format in one vault'
+                        raise SystemExit(err)
+            else:
+                err = 'Seems that provided file has not correct format in vaults'
+                raise SystemExit(err)
+    else:
+        err = 'Seems that provided file has not correct format'
+        raise SystemExit(err)
+
 def export_workspace(args):
     client = configure_client(args)
     try:
@@ -149,9 +296,9 @@ def export_workspace(args):
                         'name': secret.name,
                         'type': secret.type
                               }
-                if secret.data: secret_data.update(secret.data)
+                if secret.data: secret_data['data'] = secret.data
                 if secret.blobMeta:
-                    secret_data.update(secret.blobMeta)
+                    secret_data['blob_meta'] = secret.blobMeta
                     secret_file = client.get_file(secret.id)
                     if secret_file != [None, None]:
                         os.makedirs(os.path.join(directory, str(secret.id)), exist_ok=True)
@@ -429,6 +576,12 @@ def main():
     parser_export_workspace.add_argument('id', metavar='id', help='workspace id')
     parser_export_workspace.add_argument('directory', metavar='directory' , help='output directory (will be created if not exists)')
     parser_export_workspace.set_defaults(func=export_workspace)
+
+    """Add all options for import command"""
+    parser_import_workspace = subparsers.add_parser('import-workspace', help='Import a workspace from a JSON file')
+    parser_import_workspace.add_argument('file', metavar='file', type=argparse.FileType('r'), help='file itself')
+    parser_import_workspace.add_argument('-i', '--use-ids', action='store_true', help='try to use IDs to modify existing data')
+    parser_import_workspace.set_defaults(func=import_workspace)
 
     """Add all options for list workspaces command"""
     parser_list_workspaces = subparsers.add_parser('list-workspaces', help='List Vaultier workspaces')

@@ -258,7 +258,7 @@ class Client(object):
                 'id': workspace_id,
                 'workspace_key': Cypher(self.key).gen_workspace_key()
                }
-        self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
+        return self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
 
     def add_vault(self, ws_id, v_name, v_description=None, v_color=None):
         """
@@ -275,7 +275,7 @@ class Client(object):
                }
         if v_description: data['description'] = v_description
         if v_color: data['color'] = v_color
-        self.fetch_json('/api/vaults/', http_method='POST', data=json.dumps(data))
+        return self.fetch_json('/api/vaults/', http_method='POST', data=json.dumps(data))
 
     def add_card(self, v_id, c_name, c_description=None):
         """
@@ -290,7 +290,7 @@ class Client(object):
                 'name': c_name
                }
         if c_description: data['description'] = c_description
-        self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
+        return self.fetch_json('/api/cards/', http_method='POST', data=json.dumps(data))
 
     def add_secret(self, card_id, secret_name, json_obj, type='password', file=None):
         """
@@ -367,7 +367,7 @@ class Client(object):
         if http_method == "GET" and headers == {} and params == {} and data == None and files == None:
             return self.fetch_json_cached(uri_path, http_method=http_method, verify=verify)
         else:
-            return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
+            return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files, verify)
 
     @lru_cache(maxsize=150)
     def fetch_json_cached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
@@ -376,9 +376,9 @@ class Client(object):
         Cache will remember uri_path for the last 150 requests and return the stored response.
         This speed up vaultier FUSE
         """
-        return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
+        return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files, verify)
 
-    def fetch_json_real(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+    def fetch_json_uncached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         if verify != True:
             requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
