@@ -370,7 +370,7 @@ class Client(object):
         We also filter to only cache GET functions. Other verbs should not be cached (we don't want to skip a delete)
         """
         if http_method == "GET" and headers == {} and params == {} and data == None and files == None:
-            return self.fetch_json_cached(uri_path, http_method, headers, params, data, files, verify)
+            return self.fetch_json_cached(uri_path, http_method=http_method, verify=verify)
         else:
             return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
 
