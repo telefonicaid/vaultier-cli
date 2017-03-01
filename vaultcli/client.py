@@ -253,14 +253,9 @@ class Client(object):
         # Create new workspace
         json_obj = self.fetch_json('/api/workspaces/', http_method='POST', data=json.dumps(data))
         workspace_id = json_obj['membership']['id']
-        json_obj = self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id))
         # Set a new key for the new workspace
         data = {
                 'id': workspace_id,
-                'public_key': json_obj['public_key'],
-                'status': '200',
-                'user': json_obj['user'],
-                'workspace': json_obj['workspace'],
                 'workspace_key': Cypher(self.key).gen_workspace_key()
                }
         return self.fetch_json('/api/workspace_keys/{}/'.format(workspace_id), http_method='PUT', data=json.dumps(data))
@@ -372,7 +367,7 @@ class Client(object):
         if http_method == "GET" and headers == {} and params == {} and data == None and files == None:
             return self.fetch_json_cached(uri_path, http_method=http_method, verify=verify)
         else:
-            return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
+            return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files, verify)
 
     @lru_cache(maxsize=150)
     def fetch_json_cached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
@@ -381,9 +376,9 @@ class Client(object):
         Cache will remember uri_path for the last 150 requests and return the stored response.
         This speed up vaultier FUSE
         """
-        return self.fetch_json_real(uri_path, http_method, headers, params, data, files, verify)
+        return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files, verify)
 
-    def fetch_json_real(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+    def fetch_json_uncached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
         """Fetch JSON from API"""
         if verify != True:
             requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
