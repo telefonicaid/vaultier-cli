@@ -29,6 +29,13 @@ vaultcli config server https://your.vaultier.server.example.com
 vaultcli config key /location/of/your/vaultier.key
 ```
 
+Optionally, if your server have a self signed certificate, you can disable
+the certificate check.
+
+```bash
+vaultcli config verify false
+```
+
 ## Run
 
 Simply run `vaultcli` command with `-h` or `--help` to read the help of
