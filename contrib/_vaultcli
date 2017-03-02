@@ -148,7 +148,7 @@ case ${words[1]} in
        '--type[show type (numeric)]' \
        '1:id:()'
     ;;
-  delete-card | delete-secret | delete-vault | delete-workspace \
+  delete-card | delete-secret | delete-vault | delete-workspace | \
     list-cards | list-secrets | list-vaults | tree-workspace)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
