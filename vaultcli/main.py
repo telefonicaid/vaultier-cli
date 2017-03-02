@@ -107,8 +107,16 @@ def configure_client(args):
         err = 'vaultcli have a problem reading your keyfile.\n{0}'.format(e)
         raise SystemExit(err)
 
-    token = Auth(server, email, key).get_token()
-    return Client(server, token, key)
+    if args.insecure:
+        verify = False
+    else:
+        if config.get_default('verify') == None:
+            verify = True
+        else:
+            verify = False if config.get_default('verify').lower() == 'false' else config.get_default('verify')
+
+    token = Auth(server, email, key, verify).get_token()
+    return Client(server, token, key, verify)
 
 def import_workspace(args):
     try:
@@ -582,6 +590,7 @@ def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
     parser.add_argument('-c', '--config', metavar='file', help='custom configuration file')
+    parser.add_argument('-k', '--insecure', action='store_true', help='allow SSL server connection without certs')
     subparsers = parser.add_subparsers(metavar='', dest='command')
     subparsers.required = True
 

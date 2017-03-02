@@ -44,6 +44,7 @@ _vaultcli_add_secret_commands() {
 _arguments \
   '(-h --help)'{-h,--help}'[Show help]' \
   '(-c --config)'{-c,--config}'[Use custom configuration file]:configuration file:_files' \
+  '(-k --insecure)'{-k,--insecure}'[Allow SSL server connection without certs]' \
   '1: :_vaultcli_commands' \
   '*:: :->args'
 

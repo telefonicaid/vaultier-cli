@@ -19,10 +19,11 @@ import requests
 
 class Auth(object):
     """Base class for get Vaultier auth token"""
-    def __init__(self, server, email, key):
+    def __init__(self, server, email, key, verify=True):
         self.server = server
         self.email = email
         self.key = key
+        self.verify = verify
 
     def get_token(self):
         """
@@ -38,16 +39,20 @@ class Auth(object):
         data = {'email': self.email, 'date': server_time, 'signature': signature}
         return self.fetch_json('/api/auth/auth', http_method='POST', data=data)['token']
 
-    def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+    def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None):
         """Fetch JSON from API"""
-        if verify != True:
+        if self.verify == False:
             requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
         """Construct the full URL"""
         url = urljoin(self.server, uri_path)
 
         """Perform the HTTP request"""
-        response = requests.request(http_method, url, params=params, headers=headers, data=data, files=files, verify=verify)
+        try:
+            response = requests.request(http_method, url, params=params, headers=headers, data=data, files=files, verify=self.verify)
+        except requests.exceptions.SSLError as e:
+            err = 'SSL certificate error: {}'.format(e)
+            raise SystemExit(err)
 
         if response.status_code == 401:
             raise Unauthorized('{0} at {1}'.format(response.text, url), response)
