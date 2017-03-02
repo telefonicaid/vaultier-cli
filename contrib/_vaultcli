@@ -18,7 +18,7 @@ _vaultcli_commands() {
     'edit-secret:Edit secret contents'
     'edit-vault:Edit vault name, description or color'
     'edit-workspace:Edit workspace name or description'
-    'export-workspace:Export all contents of a workspace'
+    'export-workspace:Export a workspace to a ZIP file'
     'get-file:Get binary file from a secret'
     'import-workspace:Import a workspace from a JSON file'
     'list-cards:List cards from a vault'
@@ -117,6 +117,8 @@ case ${words[1]} in
   export-workspace)
     _arguments -n \
       '(-h --help)'{-h,--help}'[Show help]' \
+      '(-f --file)'{-f,--file}'[exported zip file name (by default use workspace name)]:file' \
+      '--raw[export as files instead of zip]' \
       '1:id:()' \
       '2:directory:_files'
     ;;

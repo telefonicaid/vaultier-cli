@@ -14,6 +14,8 @@ from vaultcli.secret import Secret
 from vaultcli.views import print_tree, print_workspaces, print_vaults, print_cards, print_secrets, print_secret
 from vaultcli.helpers import query_yes_no
 
+from zipfile import ZipFile, ZIP_DEFLATED
+
 import argparse
 import json
 import os
@@ -265,6 +267,15 @@ def export_workspace(args):
             os.makedirs(directory)
         except Exception as e:
             raise SystemExit(e)
+    if not args.raw:
+        if args.file == None:
+            zip_filename = '{}.{}'.format(workspace.name, 'zip')
+        else:
+            zip_filename = '{}.{}'.format(args.file, 'zip') if os.path.splitext(args.file)[1] != '.zip' else args.file
+        try:
+            zipfile = ZipFile(os.path.join(directory, zip_filename), 'w', ZIP_DEFLATED)
+        except Exception as e:
+            raise SystemExit(e)
     workspace_data = {
             'id': workspace.id,
             'name': workspace.name,
@@ -301,14 +312,28 @@ def export_workspace(args):
                     secret_data['blob_meta'] = secret.blobMeta
                     secret_file = client.get_file(secret.id)
                     if secret_file != [None, None]:
-                        os.makedirs(os.path.join(directory, str(secret.id)), exist_ok=True)
-                        file_name = os.path.join(directory, str(secret.id), secret_file[0])
-                        write_binary_file(file_name, secret_file[1])
+                        try:
+                            os.makedirs(os.path.join(directory, str(secret.id)), exist_ok=True)
+                            file_name = os.path.join(directory, str(secret.id), secret_file[0])
+                            write_binary_file(file_name, secret_file[1])
+                        except Exception as e:
+                            raise SystemExit(e)
+                        if not args.raw:
+                            zipfile.write(file_name, os.path.join(str(secret.id), secret_file[0]))
+                            os.remove(file_name)
+                            os.rmdir(os.path.join(directory, str(secret.id)))
                 card_data['secrets'].append(secret_data)
             vault_data['cards'].append(card_data)
         workspace_data['vaults'].append(vault_data)
     json_file = os.path.join(directory, '{}.json'.format(workspace.name))
-    write_json_file(json_file, workspace_data)
+    try:
+        write_json_file(json_file, workspace_data)
+    except Exception as e:
+        raise SystemExit(e)
+    if not args.raw:
+        zipfile.write(json_file, '{}.json'.format(workspace.name))
+        os.remove(json_file)
+        zipfile.close()
 
 def tree_workspace(args):
     client = configure_client(args)
@@ -557,7 +582,7 @@ def main():
     """Create an arparse and subparse to manage commands"""
     parser = argparse.ArgumentParser(description='Manage your Vaultier secrets from cli.')
     parser.add_argument('-c', '--config', metavar='file', help='custom configuration file')
-    subparsers = parser.add_subparsers(dest='command')
+    subparsers = parser.add_subparsers(metavar='', dest='command')
     subparsers.required = True
 
     """Add all options for config command"""
@@ -572,9 +597,12 @@ def main():
     parser_tree_workspace.set_defaults(func=tree_workspace)
 
     """Add all options for export command"""
-    parser_export_workspace = subparsers.add_parser('export-workspace', help='Export all contents of a workspace')
+    parser_export_workspace = subparsers.add_parser('export-workspace', help='Export a workspace to a ZIP file')
     parser_export_workspace.add_argument('id', metavar='id', help='workspace id')
     parser_export_workspace.add_argument('directory', metavar='directory' , help='output directory (will be created if not exists)')
+    parser_export_workspace_exclusive_arguments = parser_export_workspace.add_mutually_exclusive_group()
+    parser_export_workspace_exclusive_arguments.add_argument('-f', '--file', metavar='filename', help='exported zip file name (by default use workspace name)')
+    parser_export_workspace_exclusive_arguments.add_argument('--raw', action='store_true', help='export as files instead of zip')
     parser_export_workspace.set_defaults(func=export_workspace)
 
     """Add all options for import command"""
