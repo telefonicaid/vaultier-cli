@@ -31,6 +31,16 @@ _vaultcli_commands() {
   _describe 'command' _commands
 }
 
+_vaultcli_add_secret_commands() {
+  local -a _commands
+  _commands=(
+    'note:Add new secret note'
+    'password:Add new secret password'
+    'file:Add new secret file'
+  )
+  _describe 'command' _commands
+}
+
 _arguments \
   '(-h --help)'{-h,--help}'[Show help]' \
   '(-c --config)'{-c,--config}'[Use custom configuration file]:configuration file:_files' \
@@ -41,24 +51,42 @@ case ${words[1]} in
   add-card)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
-      '(-d --description)'{-d,--description}'[card description]:description'
+      '(-d --description)'{-d,--description}'[card description]:description' \
+      '1:id:()' \
+      '2:name:()'
+    ;;
+  add-secret)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '1: :_vaultcli_add_secret_commands' \
+      '*:: :->add_secret_args'
     ;;
   add-vault)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
       '(-d --description)'{-d,--description}'[vault description]:description' \
-      '--color[vault color]: :(blue orange purple green red)'
+      '--color[vault color]: :(blue orange purple green red)' \
+      '1:id:()' \
+      '2:name:()'
     ;;
   add-workspace)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
-      '(-d --description)'{-d,--description}'[workspace description]:description'
+      '(-d --description)'{-d,--description}'[workspace description]:description' \
+      '1:name:()'
+    ;;
+  config)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '1:option:()' \
+      '2::value:()'
     ;;
   edit-card)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
       '(-n --name)'{-n,--name}'[card name]:name' \
-      '(-d --description)'{-d,--description}'[card description]:description'
+      '(-d --description)'{-d,--description}'[card description]:description' \
+      '1:id:()'
     ;;
   edit-secret)
     _arguments \
@@ -68,31 +96,35 @@ case ${words[1]} in
       '(-p --password)'{-p,--password}'[edit password]:password' \
       '(-n --note)'{-n,--note}'[edit note]:note' \
       '(-f --file)'{-f,--file}'[change file]:file:_files' \
-      '--name[edit name]:name'
+      '--name[edit name]:name' \
+      '1:id:()'
     ;;
   edit-vault)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
       '(-n --name)'{-n,--name}'[vault name]:name' \
       '(-d --description)'{-d,--description}'[vault description]:description' \
-      '--color[vault color]: :(blue orange purple green red)'
+      '--color[vault color]: :(blue orange purple green red)' \
+      '1:id:()'
     ;;
   edit-workspace)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
       '(-n --name)'{-n,--name}'[workspace name]:name' \
-      '(-d --description)'{-d,--description}'[workspace description]:description'
+      '(-d --description)'{-d,--description}'[workspace description]:description' \
+      '1:id:()'
     ;;
   export-workspace)
     _arguments -n \
       '(-h --help)'{-h,--help}'[Show help]' \
-      '1:id:' \
+      '1:id:()' \
       '2:directory:_files'
     ;;
   get-file)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \
-      '(-o --output)'{-o,--output}'[output file (path must exists)]:file:_files'
+      '(-o --output)'{-o,--output}'[output file (path must exists)]:file:_files' \
+      '1:id:()'
     ;;
   import-workspace)
     _arguments \
@@ -110,12 +142,52 @@ case ${words[1]} in
        '--name[show name]' \
        '--file-name[show file name]' \
        '--file-size[show file size]' \
-       '--type[show type (numeric)]'
+       '--type[show type (numeric)]' \
+       '1:id:()'
     ;;
-  add-secret | config | delete-card | delete-secret | delete-vault | \
-    delete-workspace | list-cards | list-secrets | list-vaults | \
-    tree-workspace | list-workspaces)
+  delete-card | delete-secret | delete-vault | delete-workspace \
+    list-cards | list-secrets | list-vaults | tree-workspace)
+    _arguments \
+      '(-h --help)'{-h,--help}'[Show help]' \
+      '1:id:()'
+    ;;
+  list-workspaces)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]'
+    ;;
+esac
+
+case ${state} in
+  add_secret_args)
+    case ${words[1]} in
+      file)
+        _arguments \
+          '(-h --help)'{-h,--help}'[Show help]' \
+          '(-l --url)'{-l,--url}'[optional url]:url' \
+          '(-u --username)'{-u,--username}'[optional username]:username' \
+          '(-p --password)'{-p,--password}'[optional password]:password' \
+          '(-n --note)'{-n,--note}'[optional note]:note' \
+          '1:id:()' \
+          '2:name:()' \
+          '3:file:_files'
+        ;;
+      note)
+        _arguments \
+          '(-h --help)'{-h,--help}'[Show help]' \
+          '1:id:()' \
+          '2:name:()' \
+          '3:note:()'
+        ;;
+      password)
+        _arguments \
+          '(-h --help)'{-h,--help}'[Show help]' \
+          '(-l --url)'{-l,--url}'[optional url]:url' \
+          '(-u --username)'{-u,--username}'[optional username]:username' \
+          '(-n --note)'{-n,--note}'[optional note]:note' \
+          '1:id:()' \
+          '2:name:()' \
+          '3:password:()'
+        ;;
+    esac
     ;;
 esac
