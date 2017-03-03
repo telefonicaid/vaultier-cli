@@ -53,7 +53,7 @@ class WorkspaceCypher(object):
         try:
             decrypted = self.priv.decrypt(raw_cipher_data,'')
         except ValueError as ex:
-            if ex.message == "Message too large":
-                raise Exception("Parece que no estas usando la clave privada adecuada")
-            raise ex
+            if str(ex) == 'Message too large':
+                raise Exception('Seems that you\'re not using the proper private key')
+            raise
         return decrypted
