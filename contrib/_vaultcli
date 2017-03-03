@@ -44,6 +44,7 @@ _vaultcli_add_secret_commands() {
 _arguments \
   '(-h --help)'{-h,--help}'[Show help]' \
   '(-c --config)'{-c,--config}'[Use custom configuration file]:configuration file:_files' \
+  '(-k --insecure)'{-k,--insecure}'[Allow SSL server connection without certs]' \
   '1: :_vaultcli_commands' \
   '*:: :->args'
 
@@ -147,7 +148,7 @@ case ${words[1]} in
        '--type[show type (numeric)]' \
        '1:id:()'
     ;;
-  delete-card | delete-secret | delete-vault | delete-workspace \
+  delete-card | delete-secret | delete-vault | delete-workspace | \
     list-cards | list-secrets | list-vaults | tree-workspace)
     _arguments \
       '(-h --help)'{-h,--help}'[Show help]' \

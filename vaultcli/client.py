@@ -24,10 +24,11 @@ import requests
 
 class Client(object):
     """Base class for Vaultier API access"""
-    def __init__(self, server, token, key=None):
+    def __init__(self, server, token, key=None, verify=True):
         self.server = server
         self.token = token
         self.key = key
+        self.verify = verify
 
     def list_workspaces(self):
         """
@@ -358,29 +359,29 @@ class Client(object):
         files = {'blob_data': ('blob', encrypted_filedata, 'application/octet-stream'), 'blob_meta': (None, encrypted_filemeta)}
         self.fetch_json('/api/secret_blobs/{}/'.format(secret_id), http_method='PUT', headers={}, files=files)
 
-    def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+    def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None):
         """
         To be able to cache requests, no param could be a dict o an array.
         This function split requests in cacheables and not cacheables.
         We also filter to only cache GET functions. Other verbs should not be cached (we don't want to skip a delete)
         """
-        if http_method == "GET" and headers == {} and params == {} and data == None and files == None:
-            return self.fetch_json_cached(uri_path, http_method=http_method, verify=verify)
+        if http_method == 'GET' and headers == {} and params == {} and data == None and files == None:
+            return self.fetch_json_cached(uri_path)#, http_method=http_method)
         else:
-            return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files, verify)
+            return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files)
 
     @lru_cache(maxsize=150)
-    def fetch_json_cached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+    def fetch_json_cached(self, uri_path):#, http_method='GET', headers={}, params={}, data=None, files=None):
         """
         Function with caching.
         Cache will remember uri_path for the last 150 requests and return the stored response.
         This speed up vaultier FUSE
         """
-        return self.fetch_json_uncached(uri_path, http_method, headers, params, data, files, verify)
+        return self.fetch_json_uncached(uri_path)#, http_method, headers, params, data, files)
 
-    def fetch_json_uncached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None, verify=False):
+    def fetch_json_uncached(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None):
         """Fetch JSON from API"""
-        if verify != True:
+        if self.verify == False:
             requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
         headers['X-Vaultier-Token'] = self.token
         if http_method in ('POST', 'PUT', 'DELETE') and not files:
@@ -390,7 +391,10 @@ class Client(object):
         url = urljoin(self.server, uri_path)
 
         """Perform the HTTP request"""
-        response = requests.request(http_method, url, params=params, headers=headers, data=data, files=files, verify=verify)
+        try:
+            response = requests.request(http_method, url, params=params, headers=headers, data=data, files=files, verify=self.verify)
+        except requests.exceptions.SSLError as e:
+            raise SystemExit(e)
 
         if response.status_code == 401:
             raise Unauthorized('{0} at {1}'.format(response.text, url), response)
