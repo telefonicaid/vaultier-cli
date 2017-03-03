@@ -75,7 +75,11 @@ class DataCypher(object):
         encrypted_text_bytes = binascii.a2b_base64(encrypted_text)
 
         # Remove "Salt__"
-        encrypted_text_bytes = encrypted_text_bytes[8:]
+        if encrypted_text_bytes[:8] == b'Salted__':
+            encrypted_text_bytes = encrypted_text_bytes[8:]
+        else:
+            err = 'Encrypted data is incorrect, cannot decrypt'
+            raise SystemExit(err)
 
         # Get and remove salt
         salt = encrypted_text_bytes[:8]
