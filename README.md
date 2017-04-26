@@ -3,6 +3,8 @@ Awesome CLI client for Vaultier password manager
 
 ## Installation
 
+For security reasons, this software depends of Python 3.6 or higher.
+
 ```bash
 git clone https://github.com/Telefonica/vaultier-cli.git
 virtualenv3 ./vaultcli
