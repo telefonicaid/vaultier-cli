@@ -1,0 +1,13 @@
+# Vaultier as a FUSE file system
+Mapping Workspaces, Vaults and Cards as folders, and secrets as files.
+
+## Install
+pip install -r requirements.txt
+
+## Use
+python vaultfs.py mnt/
+
+It is slow when starting and each time we enter in a directory not already seen. Then it uses cache to go faster.
+
+## Dev
+kill /usr/lib/gvfs/gvfs-udisks2-volume-monitor while testing
