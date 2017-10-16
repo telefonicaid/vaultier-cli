@@ -46,5 +46,6 @@ command. It's self explanatory.
 Happy secring!!!
 
 
-# FUSE / Vault as file system
-See ``contrib/fuse/``
+## FUSE / Vault as file system
+
+See `contrib/fuse/`
