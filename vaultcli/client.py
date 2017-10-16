@@ -315,7 +315,9 @@ class Client(object):
                }
         new_secret = self.fetch_json('/api/secrets/', http_method='POST', data=json.dumps(data))
         if type == 'file' and file:
-            self.upload_file(new_secret['id'], workspace_key, file)
+            r = self.upload_file(new_secret['id'], workspace_key, file)
+            return {"secret": new_secret, "upload": r}
+        return new_secret
 
     def delete_secret(self, secret_id):
         """
@@ -323,7 +325,7 @@ class Client(object):
 
         :param secret_id: Secret unique ID given by list_secrets
         """
-        self.fetch_json('/api/secrets/{}/'.format(secret_id), http_method='DELETE')
+        return self.fetch_json('/api/secrets/{}/'.format(secret_id), http_method='DELETE')
 
     def delete_card(self, card_id):
         """
@@ -331,7 +333,7 @@ class Client(object):
 
         :param card_id: card unique ID given by list_cards
         """
-        self.fetch_json('/api/cards/{}/'.format(card_id), http_method='DELETE')
+        return self.fetch_json('/api/cards/{}/'.format(card_id), http_method='DELETE')
 
     def delete_vault(self, vault_id):
         """
@@ -339,7 +341,7 @@ class Client(object):
 
         :param vault_id: vault unique ID given by list_vaults
         """
-        self.fetch_json('/api/vaults/{}/'.format(vault_id), http_method='DELETE')
+        return self.fetch_json('/api/vaults/{}/'.format(vault_id), http_method='DELETE')
 
     def delete_workspace(self, workspace_id):
         """
@@ -347,7 +349,7 @@ class Client(object):
 
         :param workspace_id: workspace unique ID given by list_workspaces
         """
-        self.fetch_json('/api/workspaces/{}/'.format(workspace_id), http_method='DELETE')
+        return self.fetch_json('/api/workspaces/{}/'.format(workspace_id), http_method='DELETE')
 
     def upload_file(self, secret_id, workspace_key, file):
         with file as f:
@@ -357,7 +359,7 @@ class Client(object):
         encrypted_filedata = Cypher(self.key).encrypt(workspace_key, json.dumps(filedata))
         encrypted_filemeta = Cypher(self.key).encrypt(workspace_key, json.dumps(filemeta))
         files = {'blob_data': ('blob', encrypted_filedata, 'application/octet-stream'), 'blob_meta': (None, encrypted_filemeta)}
-        self.fetch_json('/api/secret_blobs/{}/'.format(secret_id), http_method='PUT', headers={}, files=files)
+        return self.fetch_json('/api/secret_blobs/{}/'.format(secret_id), http_method='PUT', headers={}, files=files)
 
     def fetch_json(self, uri_path, http_method='GET', headers={}, params={}, data=None, files=None):
         """

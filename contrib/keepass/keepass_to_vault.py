@@ -120,7 +120,7 @@ def add_secret(vault, card, name, username, password, url, notes):
             'note': notes
     }
     r = vaultier.add_secret(card, name, data)
-    #return r['id'] # ToDo
+    return r['id']
 
 def save_to_vaultier(vault, card, name, user, password, url, notes):
     """
@@ -132,7 +132,7 @@ def save_to_vaultier(vault, card, name, user, password, url, notes):
     card_id = add_card(vault_id, card)
     logger.debug(f"Card id {card_id}")
     secret_id = add_secret(vault_id, card_id, name, user, password, url, notes)
-    logger.debug(f"Secret id {secret_id}") # ToDo
+    logger.debug(f"Secret id {secret_id}")
 
 # Parse arguments
 p = argparse.ArgumentParser(prog="keepass_to_vault", description='Import Keepass to Vaultier')
