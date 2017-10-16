@@ -44,3 +44,7 @@ Simply run `vaultcli` command with `-h` or `--help` to read the help of
 command. It's self explanatory.
 
 Happy secring!!!
+
+
+# FUSE / Vault as file system
+See ``contrib/fuse/``
