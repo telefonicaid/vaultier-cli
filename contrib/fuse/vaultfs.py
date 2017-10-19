@@ -249,7 +249,7 @@ class TestFs(llfuse.Operations):
         """
         log.info("%s (fh=%s, off=%s, size=%s)" % (sys._getframe().f_code.co_name, fh, off, size))
         secret_id = fh - SECRET_BASE_INODO
-        data = bytes(json.dumps(self.get_secret(secret_id).data), "UTF-8")
+        data = bytes(json.dumps(self.get_secret(secret_id).data)+"\n", "UTF-8")
         return data[off:off+size]
 
 def init_logging(verbose=False, debug=False):
