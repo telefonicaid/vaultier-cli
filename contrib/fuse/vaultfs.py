@@ -252,19 +252,22 @@ class TestFs(llfuse.Operations):
         data = bytes(json.dumps(self.get_secret(secret_id).data), "UTF-8")
         return data[off:off+size]
 
-def init_logging(debug=False):
+def init_logging(verbose=False, debug=False):
     #formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(threadName)s: '
     #                              '[%(name)s] %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
-    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(filename)s:%(lineno)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter('%(asctime)s.%(msecs)03d [%(levelname)s] %(filename)s:%(lineno)s - %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
     if debug:
         handler.setLevel(logging.DEBUG)
         root_logger.setLevel(logging.DEBUG)
-    else:
+    elif verbose:
         handler.setLevel(logging.INFO)
         root_logger.setLevel(logging.INFO)
+    else:
+        handler.setLevel(logging.WARN)
+        root_logger.setLevel(logging.WARN)
     root_logger.addHandler(handler)
 
 def parse_args():
@@ -276,6 +279,8 @@ def parse_args():
                         help='Where to mount the file system')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='Enable debugging output')
+    parser.add_argument('--verbose', action='store_true', default=False,
+                        help='Enable logging INFO')
     parser.add_argument('--debug-fuse', action='store_true', default=False,
                         help='Enable FUSE debugging output')
     return parser.parse_args()
@@ -283,7 +288,7 @@ def parse_args():
 
 def main():
     options = parse_args()
-    init_logging(options.debug)
+    init_logging(options.verbose, options.debug)
 
     # Inicializamos el cliente de vault
     class FakeConf(object):
