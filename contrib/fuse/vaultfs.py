@@ -288,6 +288,7 @@ def main():
     # Inicializamos el cliente de vault
     class FakeConf(object):
         config = None
+        insecure = True
     fake_config = FakeConf()
     vault = vault_main.configure_client(fake_config)
 
