@@ -2,6 +2,11 @@
 Mapping Workspaces, Vaults and Cards as folders, and secrets as files.
 
 ## Install
+For ubuntu is needed package:
+ libfuse-dev
+ libattr1-dev
+ python3.6-dev
+
 pip install -r requirements.txt
 
 ## Use
